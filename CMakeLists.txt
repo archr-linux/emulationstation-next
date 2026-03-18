@@ -9,7 +9,7 @@ option(BCM "BCM host" OFF)
 
 option(BATOCERA "Set to ON to enable BATOCERA specific code" OFF)
 option(RETROBAT "Set to ON to enable RETROBAT specific code" OFF)
-option(ROCKNIX "Set to ON to enable ROCKNIX specific code" OFF)
+option(ARCH R "Set to ON to enable ARCH R specific code" OFF)
 
 option(ENABLE_FILEMANAGER "Set to ON to enable f1 shortcut for filesystem" OFF)
 option(DISABLE_KODI "Set to ON to disable kodi in menu" OFF)
@@ -110,9 +110,9 @@ if(RETROBAT)
   add_definitions(-DRETROBAT)
 endif()
 
-if(ROCKNIX)
-  MESSAGE("ROCKNIX build")
-  add_definitions(-DROCKNIX)
+if(ARCH R)
+  MESSAGE("ARCH R build")
+  add_definitions(-DARCH R)
 endif()
 
 # disable kodi menu
