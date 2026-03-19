@@ -179,11 +179,11 @@ void SystemData::removeMultiDiskContent(std::unordered_map<std::string, FileData
 		FolderData* current = stack.top();
 		stack.pop();
 
-		for (auto it : current->getChildren())
+		for (const auto& it : current->getChildren())
 		{
 			if (it->getType() == GAME && it->hasContentFiles())
 			{
-				for (auto ct : it->getContentFiles())
+				for (const auto& ct : it->getContentFiles())
 					files.push_back(ct);
 			}
 			else if (it->getType() == FOLDER)
@@ -194,7 +194,7 @@ void SystemData::removeMultiDiskContent(std::unordered_map<std::string, FileData
 		}
 	}
 
-	for (auto file : files)
+	for (const auto& file : files)
 	{
 		auto it = fileMap.find(file);
 		if (it != fileMap.cend())
@@ -258,7 +258,7 @@ void SystemData::populateFolder(FolderData* folder, std::unordered_map<std::stri
 	else if (shv == "0") showHidden = false;
 
 	Utils::FileSystem::fileList dirContent = Utils::FileSystem::getDirectoryFiles(folderPath);
-	for (auto fileInfo : dirContent)
+	for (const auto& fileInfo : dirContent)
 	{
 		filePath = fileInfo.path;
 		
@@ -399,7 +399,7 @@ void SystemData::createGroupedSystems()
 
 	std::map<std::string, std::vector<SystemData*>> map;
 
-	for (auto sys : sSystemVector)
+	for (const auto& sys : sSystemVector)
 	{
 		if (sys->isCollection() || sys->getSystemEnvData()->mGroup.empty())
 			continue;
@@ -418,9 +418,9 @@ void SystemData::createGroupedSystems()
 		map[sys->getSystemEnvData()->mGroup].push_back(sys);		
 	}
 
-	for (auto item : map)
-	{	
-		// Don't group if system count is only 1 		
+	for (const auto& item : map)
+	{
+		// Don't group if system count is only 1
 		if (item.second.size() == 1 && Settings::getInstance()->HideUniqueGroups())
 		{
 			auto groupSys = SystemData::getSystem(item.first);
@@ -434,7 +434,7 @@ void SystemData::createGroupedSystems()
 		SystemData* system = nullptr;
 		bool existingSystem = false;
 
-		for (auto sys : sSystemVector)
+		for (const auto& sys : sSystemVector)
 		{
 			if (sys->getName() == item.first)
 			{
@@ -488,7 +488,7 @@ void SystemData::createGroupedSystems()
 			if (!existingSystem)
 				sSystemVector.push_back(system);
 						
-			for (auto childSystem : item.second)
+			for (const auto& childSystem : item.second)
 				childSystem->getSystemEnvData()->mGroup = "";
 
 			continue;
@@ -496,7 +496,7 @@ void SystemData::createGroupedSystems()
 
 		FolderData* root = system->getRootFolder();
 
-		for (auto childSystem : item.second)
+		for (const auto& childSystem : item.second)
 		{
 			auto children = childSystem->getRootFolder()->getChildren();
 			if (children.size() > 0)
@@ -512,7 +512,7 @@ void SystemData::createGroupedSystems()
 
 					int games_counter = 0;
 					auto games = childSystem->getRootFolder()->getFilesRecursive(GAME, true);
-					for (auto game : games)
+					for (const auto& game : games)
 					{
 						games_counter++;
 						if (games_counter == 3)
@@ -549,7 +549,7 @@ void SystemData::createGroupedSystems()
 					}
 				}
 
-				for (auto child : children)
+				for (const auto& child : children)
 					folder->addChild(child, false);
 
 				folder->getMetadata().resetChangedFlag();
@@ -610,35 +610,35 @@ bool SystemData::loadFeatures()
 			emul.features = it->second.features;
 			emul.customFeatures = it->second.customFeatures;			
 
-			for (auto essystem : it->second.systemFeatures)
+			for (const auto& essystem : it->second.systemFeatures)
 			{
 				if (essystem.name != systemName)
 					continue;
 
 				emul.features = emul.features | essystem.features;
-				for (auto feat : essystem.customFeatures)
+				for (const auto& feat : essystem.customFeatures)
 					emul.customFeatures.push_back(feat);
 			}
 
 			for (auto& core : emul.cores)
 			{
-				for (auto escore : it->second.cores)
+				for (const auto& escore : it->second.cores)
 				{
 					if (core.name != escore.name)
 						continue;
-					
+
 					core.features = core.features | escore.features;
 
-					for (auto feat : escore.customFeatures)
+					for (const auto& feat : escore.customFeatures)
 						core.customFeatures.push_back(feat);
 
-					for (auto essystem : escore.systemFeatures)
+					for (const auto& essystem : escore.systemFeatures)
 					{
 						if (essystem.name != systemName)
 							continue;
 
 						core.features = core.features | essystem.features;
-						for (auto feat : essystem.customFeatures)
+						for (const auto& feat : essystem.customFeatures)
 							core.customFeatures.push_back(feat);
 					}
 
@@ -661,9 +661,9 @@ bool SystemData::hasFeatures()
 	if (isCollection() || hasPlatformId(PlatformIds::PLATFORM_IGNORE))
 		return false;
 
-	for (auto emulator : mEmulators)
+	for (const auto& emulator : mEmulators)
 	{
-		for (auto& core : emulator.cores)
+		for (const auto& core : emulator.cores)
 			if (core.features != EmulatorFeatures::Features::none || core.customFeatures.size() > 0)
 				return true;
 
@@ -684,16 +684,16 @@ CustomFeatures SystemData::getCustomFeatures(std::string emulatorName, std::stri
 	if (coreName.empty() || coreName == "auto")
 		coreName = getCore();
 
-	for (auto emulator : mEmulators)
+	for (const auto& emulator : mEmulators)
 	{
 		if (emulator.name == emulatorName)
 		{
-			for (auto ft : emulator.customFeatures)
+			for (const auto& ft : emulator.customFeatures)
 				ret.push_back(ft);
 
-			for (auto& core : emulator.cores)
+			for (const auto& core : emulator.cores)
 				if (coreName == core.name)
-					for (auto ft : core.customFeatures)
+					for (const auto& ft : core.customFeatures)
 						ret.push_back(ft);
 
 			break;
@@ -712,15 +712,15 @@ bool SystemData::isFeatureSupported(std::string emulatorName, std::string coreNa
 	if (coreName.empty() || coreName == "auto")
 		coreName = getCore();
 
-	for (auto emulator : mEmulators)
+	for (const auto& emulator : mEmulators)
 	{
 		if (emulator.name == emulatorName)
 		{
-			for (auto& core : emulator.cores)
+			for (const auto& core : emulator.cores)
 				if (coreName == core.name)
 					if ((core.features & feature) == feature)
 						return true;
-			
+
 			return (emulator.features & feature) == feature;
 		}
 	}
@@ -732,9 +732,9 @@ bool SystemData::isFeatureSupported(std::string emulatorName, std::string coreNa
 void SystemData::loadAdditionnalConfig(pugi::xml_node& srcSystems)
 {	
 	std::vector<std::string> rootPaths = { Paths::getUserEmulationStationPath(), Paths::getEmulationStationPath() };
-	for (auto rootPath : VectorHelper::distinct(rootPaths, [](auto x) { return x; }))
+	for (const auto& rootPath : VectorHelper::distinct(rootPaths, [](auto x) { return x; }))
 	{
-		for (auto customPath : Utils::FileSystem::getDirContent(rootPath, false, false))
+		for (const auto& customPath : Utils::FileSystem::getDirContent(rootPath, false, false))
 		{
 			if (Utils::FileSystem::getExtension(customPath) != ".cfg")
 				continue;
@@ -950,7 +950,7 @@ bool SystemData::loadConfig(Window* window)
 
 		CollectionSystemManager::get()->updateSystemsList();
 
-		for (auto sys : SystemData::sSystemVector)
+		for (const auto& sys : SystemData::sSystemVector)
 		{
 			auto theme = sys->getTheme();
 			if (theme != nullptr)
@@ -1062,7 +1062,7 @@ SystemData* SystemData::loadSystem(pugi::xml_node system, bool fullMode)
 
 	// convert extensions list from a string into a vector of strings
 	std::set<std::string> extensions;
-	for (auto ext : readList(system.child("extension").text().get()))
+	for (const auto& ext : readList(system.child("extension").text().get()))
 	{
 		std::string extlow = Utils::String::toLower(ext);
 		if (extensions.find(extlow) == extensions.cend())
@@ -1150,7 +1150,7 @@ SystemData* SystemData::loadSystem(pugi::xml_node system, bool fullMode)
 
 			if (emuNode.attribute("incompatible_extensions"))
 			{
-				for (auto ext : readList(emuNode.attribute("incompatible_extensions").value()))
+				for (const auto& ext : readList(emuNode.attribute("incompatible_extensions").value()))
 				{
 					std::string extlow = Utils::String::toLower(ext);
 					if (std::find(emulatorData.incompatibleExtensions.cbegin(), emulatorData.incompatibleExtensions.cend(), extlow) == emulatorData.incompatibleExtensions.cend())
@@ -1173,7 +1173,7 @@ SystemData* SystemData::loadSystem(pugi::xml_node system, bool fullMode)
 					
 					if (coreNode.attribute("incompatible_extensions"))
 					{
-						for (auto ext : readList(coreNode.attribute("incompatible_extensions").value()))
+						for (const auto& ext : readList(coreNode.attribute("incompatible_extensions").value()))
 						{
 							std::string extlow = Utils::String::toLower(ext);
 							if (std::find(core.incompatibleExtensions.cbegin(), core.incompatibleExtensions.cend(), extlow) == core.incompatibleExtensions.cend())
@@ -1441,7 +1441,7 @@ GameCountInfo* SystemData::getGameCountInfo()
 	long gameTime = 0;
 	std::string mostCountPlayed;
 
-	for (auto game : games)
+	for (const auto& game : games)
 	{
 		if (game->getFavorite())
 			mGameCountInfo->favoriteCount++;
@@ -1558,7 +1558,7 @@ void SystemData::loadTheme()
 		else
 			sysData["system.releaseYear"] = _("Unknown");
 		
-		for (auto property : properties)
+		for (const auto& property : properties)
 		{
 			auto name = "system." + property.first;
 			if (sysData.find(name) == sysData.cend())
@@ -1639,8 +1639,8 @@ Vector2f SystemData::getGridSizeOverride()
 
 bool SystemData::isNetplaySupported()
 {
-	for (auto emul : mEmulators)
-		for (auto core : emul.cores)
+	for (const auto& emul : mEmulators)
+		for (const auto& core : emul.cores)
 			if (core.netplay)
 				return true;
 
@@ -1657,13 +1657,13 @@ std::string SystemData::getCompatibleCoreNames(EmulatorFeatures::Features featur
 {
 	std::string ret;
 
-	for (auto emul : mEmulators)
+	for (const auto& emul : mEmulators)
 	{
 		if ((emul.features & feature) == feature)
 			ret += ret.empty() ? emul.name : ", " + emul.name;
 		else
 		{
-			for (auto core : emul.cores)
+			for (const auto& core : emul.cores)
 			{
 				if ((core.features & feature) == feature)
 				{
@@ -1691,7 +1691,7 @@ bool SystemData::isCheevosSupported()
 		{
 			auto groupName = getName();
 
-			for (auto sys : SystemData::sSystemVector)
+			for (const auto& sys : SystemData::sSystemVector)
 			{
 				if (sys == this || sys->mEnvData == nullptr || sys->mEnvData->mGroup != groupName)
 					continue;
@@ -1722,9 +1722,9 @@ bool SystemData::isCheevosSupported()
 			return mIsCheevosSupported != 0;
 		}
 		
-		for (auto emul : mEmulators)
+		for (const auto& emul : mEmulators)
 		{
-			for (auto core : emul.cores)
+			for (const auto& core : emul.cores)
 			{
 				if ((core.features & EmulatorFeatures::cheevos) == EmulatorFeatures::cheevos)
 				{
@@ -1762,7 +1762,7 @@ std::unordered_set<std::string> SystemData::getAllGroupNames()
 
 	std::unordered_set<std::string> names;
 	
-	for (auto sys : SystemData::sSystemVector)
+	for (const auto& sys : SystemData::sSystemVector)
 	{
 		std::string name;
 		if (sys->isGroupSystem())
@@ -1781,7 +1781,7 @@ std::unordered_set<std::string> SystemData::getGroupChildSystemNames(const std::
 {
 	std::unordered_set<std::string> names;
 
-	for (auto sys : SystemData::sSystemVector)
+	for (const auto& sys : SystemData::sSystemVector)
 		if (sys->mEnvData != nullptr && sys->mEnvData->mGroup == groupName)
 			names.insert(sys->getName());
 		
@@ -1793,7 +1793,7 @@ SystemData* SystemData::getParentGroupSystem()
 	if (!isGroupChildSystem() || isGroupSystem())
 		return this;
 
-	for (auto sys : SystemData::sSystemVector)
+	for (const auto& sys : SystemData::sSystemVector)
 		if (sys->isGroupSystem() && sys->getName() == mEnvData->mGroup && !mEnvData->mAutoUngroup)
 			return sys;
 
@@ -1809,7 +1809,7 @@ std::string SystemData::getEmulator(bool resolveDefault)
 	std::string emulator = SystemConf::getInstance()->get(getName() + ".emulator");
 #endif
 
-	for (auto emul : mEmulators)
+	for (const auto& emul : mEmulators)
 		if (emul.name == emulator)
 			return emulator;
 
@@ -1831,9 +1831,9 @@ std::string SystemData::getCore(bool resolveDefault)
 	{
 		auto emul = getEmulator(true);
 
-		for (auto memul : mEmulators)
+		for (const auto& memul : mEmulators)
 			if (memul.name == emul)
-				for (auto mcore : memul.cores)
+				for (const auto& mcore : memul.cores)
 					if (mcore.name == core)
 						return core;
 	}
@@ -1851,8 +1851,8 @@ std::string SystemData::getCore(bool resolveDefault)
 std::string SystemData::getDefaultEmulator()
 {
 	// Seeking default="true" attribute
-	for (auto emul : mEmulators)
-		for (auto core : emul.cores)
+	for (const auto& emul : mEmulators)
+		for (const auto& core : emul.cores)
 			if (core.isDefault)
 				return emul.name;
 		
@@ -1872,11 +1872,11 @@ std::string SystemData::getDefaultCore(const std::string emulatorName)
 	if (emul.empty())
 		return "";
 	
-	for (auto it : mEmulators)
+	for (const auto& it : mEmulators)
 	{
 		if (it.name == emul)
 		{
-			for (auto core : it.cores)
+			for (const auto& core : it.cores)
 				if (core.isDefault)
 					return core.name;
 
@@ -1890,11 +1890,11 @@ std::string SystemData::getDefaultCore(const std::string emulatorName)
 
 std::string SystemData::getLaunchCommand(const std::string emulatorName, const std::string coreName)
 {
-	for (auto emulator : mEmulators)
+	for (const auto& emulator : mEmulators)
 	{
 		if (emulator.name == emulatorName)
 		{
-			for (auto& core : emulator.cores)
+			for (const auto& core : emulator.cores)
 				if (coreName == core.name && !core.customCommandLine.empty())
 					return core.customCommandLine;
 
@@ -1938,7 +1938,7 @@ bool SystemData::hasEmulatorSelection()
 
 SystemData* SystemData::getSystem(const std::string& name)
 {	
-	for (auto sys : SystemData::sSystemVector)
+	for (const auto& sys : SystemData::sSystemVector)
 		if (Utils::String::compareIgnoreCase(sys->getName(), name) == 0)
 			return sys;
 
@@ -1947,7 +1947,7 @@ SystemData* SystemData::getSystem(const std::string& name)
 
 SystemData* SystemData::getFirstVisibleSystem()
 {
-	for (auto sys : SystemData::sSystemVector)
+	for (const auto& sys : SystemData::sSystemVector)
 		if (sys->mTheme != nullptr && sys->isVisible())
 			return sys;
 

@@ -54,16 +54,12 @@ bool TextureData::initSVGFromMemory(const unsigned char* fileData, size_t length
 	if (mDataRGBA || (mTextureID != 0))
 		return true;
 
-	// nsvgParse excepts a modifiable, null-terminated string
-	char* copy = (char*)malloc(length + 1);
-	if (copy == NULL)
-		return false;
-	
-	memcpy(copy, fileData, length);
+	// nsvgParse expects a modifiable, null-terminated string
+	std::vector<char> copy(length + 1);
+	memcpy(copy.data(), fileData, length);
 	copy[length] = '\0';
 
-	NSVGimage* svgImage = nsvgParse(copy, "px", DPI);
-	free(copy);
+	NSVGimage* svgImage = nsvgParse(copy.data(), "px", DPI);
 	if (!svgImage)
 	{
 		LOG(LogError) << "Error parsing SVG image.";
@@ -537,7 +533,7 @@ void TextureData::releaseRAM()
 	if (mDataRGBA != nullptr && !mIsExternalDataRGBA)
 		delete[] mDataRGBA;
 
-	mDataRGBA = 0;
+	mDataRGBA = nullptr;
 }
 
 void TextureData::setStoredSize(float width, float height)

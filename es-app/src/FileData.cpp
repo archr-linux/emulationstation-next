@@ -168,7 +168,7 @@ std::string FileData::findLocalArt(const std::string& type, std::vector<std::str
 {
 	if (Settings::getInstance()->getBool("LocalArt"))
 	{
-		for (auto ext : exts)
+		for (const auto& ext : exts)
 		{
 			std::string path = getSystemEnvData()->mStartPath + "/images/" + getDisplayName() + (type.empty() ? "" :  "-" + type) + ext;
 			if (Utils::FileSystem::exists(path))
@@ -262,7 +262,7 @@ bool FileData::hasAnyMedia()
 	if (Utils::FileSystem::exists(getImagePath()) || Utils::FileSystem::exists(getThumbnailPath(false)) || Utils::FileSystem::exists(getVideoPath()))
 		return true;
 
-	for (auto mdd : mMetadata.getMDD())
+	for (const auto& mdd : mMetadata.getMDD())
 	{
 		if (mdd.type != MetaDataType::MD_PATH)
 			continue;
@@ -293,7 +293,7 @@ std::vector<std::string> FileData::getFileMedias()
 {
 	std::vector<std::string> ret;
 
-	for (auto mdd : mMetadata.getMDD())
+	for (const auto& mdd : mMetadata.getMDD())
 	{
 		if (mdd.type != MetaDataType::MD_PATH)
 			continue;
@@ -865,7 +865,7 @@ std::set<std::string> FileData::getContentFiles()
 
 	if (Utils::FileSystem::isDirectory(mPath))
 	{
-		for (auto file : Utils::FileSystem::getDirContent(mPath, true, true))
+		for (const auto& file : Utils::FileSystem::getDirContent(mPath, true, true))
 			files.insert(file);
 	}
 	else if (hasContentFiles())
@@ -950,7 +950,7 @@ void FileData::deleteGameFiles()
 	if (path.empty() || getSystemEnvData()->mStartPath == path)
 		return;
 
-	for (auto mdd : mMetadata.getMDD())
+	for (const auto& mdd : mMetadata.getMDD())
 	{
 		if (mMetadata.getType(mdd.id) != MetaDataType::MD_PATH)
 			continue;
@@ -968,7 +968,7 @@ void FileData::deleteGameFiles()
 
 	Utils::FileSystem::removeFile(path);
 
-	for (auto contentFile : getContentFiles())
+	for (const auto& contentFile : getContentFiles())
 		Utils::FileSystem::removeFile(contentFile);
 }
 
@@ -1166,11 +1166,11 @@ std::shared_ptr<std::vector<FileData*>> FolderData::findChildrenListToDisplayAtC
 {
 	auto items = getChildrenListToDisplay();
 
-	for (auto item : items)
+	for (const auto& item : items)
 		if (toFind == item)
 			return std::make_shared<std::vector<FileData*>>(items);
 
-	for (auto item : items)
+	for (const auto& item : items)
 	{
 		if (item->getType() != FOLDER)
 			continue;
@@ -1197,7 +1197,7 @@ FileData* FolderData::findUniqueGameForFolder()
 	FileData* found = nullptr;
 
 	int count = 0;
-	for (auto game : games)
+	for (const auto& game : games)
 	{
 		if (game->getHidden())
 		{
@@ -1248,7 +1248,7 @@ void FolderData::getFilesRecursiveWithContext(std::vector<FileData*>& out, unsig
 	
 	FileFilterIndex* idx = pSystem->getIndex(false);
 
-	for (auto it : mChildren)
+	for (const auto& it : mChildren)
 	{
 		if (it->getType() & typeMask)
 		{
@@ -1312,7 +1312,7 @@ std::vector<FileData*> FolderData::getFilesRecursive(unsigned int typeMask, bool
 
 	if (pSystem->isGameSystem() && !pSystem->isCollection())
 	{
-		for (auto ext : Utils::String::split(Utils::String::toLower(Settings::getInstance()->getString(pSystem->getName() + ".HiddenExt")), ';'))
+		for (const auto& ext : Utils::String::split(Utils::String::toLower(Settings::getInstance()->getString(pSystem->getName() + ".HiddenExt")), ';'))
 			if (ctx.hiddenExtensions.find(ext) == ctx.hiddenExtensions.cend())
 				ctx.hiddenExtensions.insert(ext);
 	}
@@ -1438,11 +1438,11 @@ const std::string FileData::getCore(bool resolveDefault)
 		{
 			bool exists = false;
 
-			for (auto emul : getSourceFileData()->getSystem()->getEmulators())
+			for (const auto& emul : getSourceFileData()->getSystem()->getEmulators())
 			{
 				if (emul.name == emulator)
 				{
-					for (auto cr : emul.cores)
+					for (const auto& cr : emul.cores)
 					{
 						if (cr.name == core)
 						{
@@ -1483,7 +1483,7 @@ const std::string FileData::getEmulator(bool resolveDefault)
 		// Check emulator exists 
 		bool exists = false;
 
-		for (auto emul : getSourceFileData()->getSystem()->getEmulators())
+		for (const auto& emul : getSourceFileData()->getSystem()->getEmulators())
 			if (emul.name == emulator) { exists = true; break; }
 
 		if (!exists)
@@ -1537,9 +1537,9 @@ bool FileData::isNetplaySupported()
 			return true;
 	}
 	
-	for (auto emul : system->getEmulators())
+	for (const auto& emul : system->getEmulators())
 		if (emulName == emul.name)
-			for (auto core : emul.cores)
+			for (const auto& core : emul.cores)
 				if (coreName == core.name)
 					return core.netplay;
 					
@@ -1567,7 +1567,7 @@ void FolderData::removeVirtualFolders() {
 
 	std::unordered_set<FileData*> filesToRemove;
 
-	for (auto file : mChildren)
+	for (const auto& file : mChildren)
 	{
 		if (file->getType() != FOLDER)
 			continue;
@@ -1579,7 +1579,7 @@ void FolderData::removeVirtualFolders() {
 
 	bulkRemoveChildren(mChildren, filesToRemove);
 
-	for (auto file : filesToRemove)
+	for (const auto& file : filesToRemove)
 		delete file;
 }
 
@@ -1753,14 +1753,14 @@ bool FileData::isExtensionCompatible()
 	auto emulName = game->getEmulator();
 	auto coreName = game->getCore();
 
-	for (auto emul : system->getEmulators())
+	for (const auto& emul : system->getEmulators())
 	{
 		if (emulName == emul.name)
 		{
 			if (std::find(emul.incompatibleExtensions.cbegin(), emul.incompatibleExtensions.cend(), extension) != emul.incompatibleExtensions.cend())
 				return false;
 
-			for (auto core : emul.cores)
+			for (const auto& core : emul.cores)
 			{
 				if (coreName == core.name)
 					return std::find(core.incompatibleExtensions.cbegin(), core.incompatibleExtensions.cend(), extension) == core.incompatibleExtensions.cend();
@@ -2108,7 +2108,7 @@ IBindable* FileData::getBindableParent()
 
 		if (showFoldersMode == "having multiple games")
 		{
-			for (auto child : group->getRootFolder()->getChildren())
+			for (const auto& child : group->getRootFolder()->getChildren())
 			{
 				if (child->getType() == FOLDER && ((FolderData*)child)->getChildren().size() == 1)
 					if (((FolderData*)child)->getChildren()[0] == this)

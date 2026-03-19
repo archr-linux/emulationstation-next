@@ -126,7 +126,7 @@ void GuiComponent::render(const Transform4x4f& parentTrans)
 
 void GuiComponent::renderChildren(const Transform4x4f& transform) const
 {
-	for (auto child : mChildren)
+	for (const auto& child : mChildren)
 		if (child->mVisible)
 			TRYCATCH("GuiComponent::renderChildren", child->render(transform));
 }
@@ -405,7 +405,7 @@ void GuiComponent::setOpacity(unsigned char opacity)
 	onOpacityChanged();
 
 	auto ambientOpacity = getOpacity();
-	for (auto it : mChildren)
+	for (const auto& it : mChildren)
 		it->setAmbientOpacity(ambientOpacity);
 }
 
@@ -418,7 +418,7 @@ void GuiComponent::setAmbientOpacity(unsigned char opacity)
 	onOpacityChanged();
 
 	auto ambientOpacity = getOpacity();
-	for (auto it : mChildren)
+	for (const auto& it : mChildren)
 		it->setAmbientOpacity(ambientOpacity);
 }
 
@@ -641,7 +641,7 @@ bool GuiComponent::storyBoardExists(const std::string& name, const std::string& 
 		if (propertyName.empty())
 			return true;
 		
-		for (auto animation : it->second->animations)
+		for (const auto& animation : it->second->animations)
 			if (animation->propertyName == propertyName)
 				return true;
 	}
@@ -896,7 +896,7 @@ void GuiComponent::applyTheme(const std::shared_ptr<ThemeData>& theme, const std
 	else
 		setClickAction("");
 
-	for (auto prop : elem->properties)
+	for (const auto& prop : elem->properties)
 		if (prop.second.type == ThemeData::ThemeElement::Property::PropertyType::String && Utils::String::endsWith(prop.first, "_binding"))
 			mBindingExpressions[Utils::String::replace(prop.first, "_binding", "")] = prop.second.s;
 
@@ -941,7 +941,7 @@ void GuiComponent::onShow()
 	if (mStoryboardAnimator != nullptr)
 		mStoryboardAnimator->reset();
 
-	for (auto child : mChildren)
+	for (const auto& child : mChildren)
 		child->onShow();
 }
 
@@ -952,25 +952,25 @@ void GuiComponent::onHide()
 	if (mStoryboardAnimator != nullptr)
 		mStoryboardAnimator->pause();
 
-	for (auto child : mChildren)
+	for (const auto& child : mChildren)
 		child->onHide();
 }
 
 void GuiComponent::onScreenSaverActivate()
 {
-	for (auto child : mChildren)
+	for (const auto& child : mChildren)
 		child->onScreenSaverActivate();
 }
 
 void GuiComponent::onScreenSaverDeactivate()
 {
-	for (auto child : mChildren)
+	for (const auto& child : mChildren)
 		child->onScreenSaverDeactivate();
 }
 
 void GuiComponent::topWindow(bool isTop)
 {
-	for (auto child : mChildren)
+	for (const auto& child : mChildren)
 		child->topWindow(isTop);
 }
 
@@ -1432,7 +1432,7 @@ std::vector<GuiComponent*> GuiComponent::enumerateExtraChildrens()
 		GuiComponent* current = stack.top();
 		stack.pop();
 
-		for (auto it : current->mChildren)
+		for (const auto& it : current->mChildren)
 		{
 			if (!it->mVisible)
 				continue;
@@ -1460,9 +1460,9 @@ static void visit(const std::vector<GuiComponent*>& items, const std::string& it
 		GuiComponent* comp = *itemIt;
 		visited[comp] = true;
 
-		for (auto expression : comp->getBindingExpressions())
+		for (const auto& expression : comp->getBindingExpressions())
 		{
-			for (auto name : Utils::String::extractStrings(expression.second, "{", ":"))
+			for (const auto& name : Utils::String::extractStrings(expression.second, "{", ":"))
 			{
 				if (name == "system" || name == "game" || name == "collection" || name == "grid")
 					continue;
@@ -1489,12 +1489,12 @@ void GuiComponent::updateBindings(IBindable* bindable)
 	std::vector<GuiComponent*> sortedItems;
 	std::unordered_map<GuiComponent*, bool> visited;
 
-	for (auto child : recursiveExtraChildrens)
+	for (const auto& child : recursiveExtraChildrens)
 		visit(recursiveExtraChildrens, child->getTag(), sortedItems, visited);
 
 	bool hasStackPanel = false;
 
-	for (auto child : sortedItems) // recursiveExtraChildrens
+	for (const auto& child : sortedItems) // recursiveExtraChildrens
 	{
 		hasStackPanel |= child->getThemeTypeName() == "stackpanel";
 		BindingManager::updateBindings(child, bindable, false);
@@ -1502,7 +1502,7 @@ void GuiComponent::updateBindings(IBindable* bindable)
 
 	if (hasStackPanel)
 	{
-		for (auto child : recursiveExtraChildrens)
+		for (const auto& child : recursiveExtraChildrens)
 			if (child->getThemeTypeName() == "stackpanel")
 				child->onSizeChanged();
 	}
@@ -1519,7 +1519,7 @@ Vector4f GuiComponent::getClientRect()
 
 void GuiComponent::recalcChildrenLayout()
 {
-	for (auto child : mChildren)
+	for (const auto& child : mChildren)
 		child->recalcLayout();
 }
 
