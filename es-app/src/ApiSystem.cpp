@@ -435,15 +435,27 @@ bool ApiSystem::launchFileManager(Window *window)
 }
 
 #if !WIN32
-bool ApiSystem::enableWifi(std::string ssid, std::string key, std::string country) 
+bool ApiSystem::enableWifi(std::string ssid, std::string key, std::string country)
 {
 	bool ret;
 
 	ret = executeScript("wifictl enable");
 	if (!ret)
 		return ret;
-	
-	return executeScript("wifictl connect \"" + ssid + "\" \"" + key + "\" \"" + country + "\"");
+
+	// Use single quotes to prevent shell expansion of special chars ($, #, !, etc.)
+	// Escape any existing single quotes in ssid/key
+	std::string escapedSsid = ssid;
+	std::string escapedKey = key;
+	std::string escapedCountry = country;
+	for (auto* s : {&escapedSsid, &escapedKey, &escapedCountry}) {
+		size_t pos = 0;
+		while ((pos = s->find("'", pos)) != std::string::npos) {
+			s->replace(pos, 1, "'\\''");
+			pos += 4;
+		}
+	}
+	return executeScript("wifictl connect '" + escapedSsid + "' '" + escapedKey + "' '" + escapedCountry + "'");
 }
 #else
 bool ApiSystem::enableWifi(std::string ssid, std::string key) 
