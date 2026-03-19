@@ -465,7 +465,8 @@ void Font::renderTextCacheEx(TextCache* cache, const Transform4x4f& parentTrans,
 		glowTrans.round();
 		Renderer::setMatrix(glowTrans);
 
-		auto copy = cache->vertexLists;
+		auto backup = std::move(cache->vertexLists);
+		cache->vertexLists = backup; // copy for glow mutations
 
 		cache->setRenderingGlow(true);
 
@@ -502,7 +503,7 @@ void Font::renderTextCacheEx(TextCache* cache, const Transform4x4f& parentTrans,
 		}
 
 		cache->setRenderingGlow(false);
-		cache->vertexLists = copy;
+		cache->vertexLists = std::move(backup);
 	}
 
 	auto trans = parentTrans;
@@ -1058,12 +1059,12 @@ TextCache* Font::buildTextCache(const std::string& _text, Vector2f offset, unsig
 	cache->imageSubstitutes = imageSubstitutes;
 
 	unsigned int i = 0;
-	for(auto it = vertMap.cbegin(); it != vertMap.cend(); it++)
+	for(auto it = vertMap.begin(); it != vertMap.end(); it++)
 	{
 		TextCache::VertexList& vertList = cache->vertexLists.at(i);
 
 		vertList.textureIdPtr = &it->first->textureId;
-		vertList.verts = it->second;
+		vertList.verts = std::move(it->second);
 		i++;
 	}
 

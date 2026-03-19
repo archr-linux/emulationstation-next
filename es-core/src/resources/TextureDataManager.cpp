@@ -158,36 +158,11 @@ void TextureDataManager::cleanupVRAM(std::shared_ptr<TextureData> exclude)
 	if (exclude)
 		size += exclude->getEstimatedVRAMUsage();
 
-	if (size >= max_texture)
-	{
-		// First Perform cleanup on textures without considering the queue
-		for (auto it = mTextures.crbegin(); it != mTextures.crend(); ++it)
-		{
-			if (size < max_texture)
-				break;
-
-			auto tex = *it;
-			if (tex == exclude || !tex->isReloadable() || tex->isRequired() || !tex->isLoaded())
-				continue;
-
-			auto textureSize = tex->getEstimatedVRAMUsage();
-			if (textureSize == 0)
-				continue;
-
-			LOG(LogDebug) << "Cleanup VRAM\tReleased : " << tex->getPath().c_str();
-
-			tex->releaseVRAM();
-			tex->releaseRAM();
-
-			size -= textureSize;
-		}
-	}
-
-	// Perform cleanup including the queue
 	size += queuesize;
 	if (size < max_texture)
 		return;
 
+	// Single pass: release loaded textures first, then queued ones
 	for (auto it = mTextures.crbegin(); it != mTextures.crend(); ++it)
 	{
 		if (size < max_texture)
@@ -203,23 +178,14 @@ void TextureDataManager::cleanupVRAM(std::shared_ptr<TextureData> exclude)
 
 		if (tex->isLoaded())
 		{
-			LOG(LogDebug) << "Cleanup VRAM\tReleased : " << tex->getPath().c_str();
-
 			tex->releaseVRAM();
 			tex->releaseRAM();
-
 			size -= textureSize;
 		}
 		else if (mLoader->remove(tex))
 		{
-			LOG(LogDebug) << "Cleanup VRAM\tRemoved from queue : " << tex->getPath().c_str();
 			size -= textureSize;
 		}
-	}
-
-	if (size > max_texture)
-	{
-		LOG(LogDebug) << "Cleanup VRAM\tRemoved from queue";
 	}
 }
 
