@@ -408,7 +408,7 @@ void InputManager::rebuildAllJoysticks(bool deinit)
 
 		if (!loadInputConfig(mInputConfigs[joyId]))
 		{
-#if !defined(BATOCERA) || !defined(ARCH R)
+#if !defined(BATOCERA) || !defined(ARCHR)
 			std::string mappingString;
 			
 			if (SDL_IsGameController(idx))

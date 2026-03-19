@@ -235,7 +235,7 @@ void GuiSettings::addInputTextConfigRow(const std::string& title, const std::str
 	{
 		std::string data = localStoreInSettings ? Settings::getInstance()->getString(localSettingsID) : SystemConf::getInstance()->get(localSettingsID);
 
-#if defined(BATOCERA) || defined(ARCH R)
+#if defined(BATOCERA) || defined(ARCHR)
 		if (password && (SystemConf::getInstance()->get("system.security.enabled") == "1"))
 			data.clear();
 #endif

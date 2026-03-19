@@ -169,7 +169,7 @@ GuiMenu::GuiMenu(Window *window, bool animate) : GuiComponent(window), mMenu(win
 	
 	if (isFullUI)
 	{
-#if defined(BATOCERA) || defined(ARCH R)
+#if defined(BATOCERA) || defined(ARCHR)
 		addEntry(_("GAME SETTINGS").c_str(), true, [this] { openGamesSettings(); }, "iconGames");
 		addEntry(GuiControllersSettings::getControllersSettingsLabel(), true, [window] { GuiControllersSettings::openControllersSettings(window); }, "iconControllers");
 		addEntry(_("USER INTERFACE SETTINGS").c_str(), true, [this] { openUISettings(); }, "iconUI");
@@ -806,7 +806,7 @@ void GuiMenu::openDeveloperSettings()
 	s->addSwitch(_("SHOW FRAMERATE"), _("Also turns on the emulator's native FPS counter, if available."), "DrawFramerate", true, nullptr);
 	s->addSwitch(_("VSYNC"), "VSync", true, [] { Renderer::setSwapInterval(); });
 
-#if defined(BATOCERA) || defined(ARCH R)
+#if defined(BATOCERA) || defined(ARCHR)
 	// overscan
 	auto overscan_enabled = std::make_shared<SwitchComponent>(mWindow);
 	overscan_enabled->setState(Settings::getInstance()->getBool("Overscan"));
@@ -1148,7 +1148,7 @@ void GuiMenu::openDeveloperSettings()
 		s->addWithLabel(_("RETROARCH MENU DRIVER"), retroarchRgui);
 		s->addSaveFunc([retroarchRgui] { SystemConf::getInstance()->set("global.retroarch.menu_driver", retroarchRgui->getSelected()); });
 	}
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 	auto invertJoy = std::make_shared<SwitchComponent>(mWindow);
 	invertJoy->setState(Settings::getInstance()->getBool("InvertButtons"));
 	s->addWithDescription(_("SWITCH CONFIRM & CANCEL BUTTONS IN EMULATIONSTATION"), _("Switches the South and East buttons' functionality"), invertJoy);
@@ -1186,7 +1186,7 @@ void GuiMenu::openDeveloperSettings()
 	}
 //#endif
 
-#if defined(BATOCERA) || defined(ARCH R)
+#if defined(BATOCERA) || defined(ARCHR)
 	// PS3 controller enable
 	auto enable_ps3 = std::make_shared<SwitchComponent>(mWindow);
 	enable_ps3->setState(SystemConf::getInstance()->getBool("controllers.ps3.enabled"));
@@ -1562,7 +1562,7 @@ void GuiMenu::openSystemSettings()
 #endif
 
 	// Timezone
-#if defined(ARCH R)
+#if defined(ARCHR)
 	auto tzChoices = std::make_shared<OptionListComponent<std::string> >(mWindow, _("SELECT YOUR TIME ZONE"), false);
 	std::string currentTZ = SystemConf::getInstance()->get("system.timezone");
 	if (currentTZ.empty())
@@ -1663,7 +1663,7 @@ void GuiMenu::openSystemSettings()
 			}
 		}
 	});
-#if defined(ARCH R)
+#if defined(ARCHR)
       // Add option to toggle mangohud
       if (Utils::Platform::GetEnv("DEVICE_MANGOHUD_SUPPORT") == "true"){
         auto mangohud_toggle = std::make_shared<SwitchComponent>(mWindow);
@@ -1722,7 +1722,7 @@ void GuiMenu::openSystemSettings()
 	}
 #endif
 
-#if defined(BATOCERA) || defined(ARCH R)
+#if defined(BATOCERA) || defined(ARCHR)
 	s->addGroup(_("HARDWARE"));
 #endif
 
@@ -2400,7 +2400,7 @@ void GuiMenu::openSystemSettings()
 
 		if (SystemData::isNetplayActivated() && ApiSystem::getInstance()->isScriptingSupported(ApiSystem::NETPLAY))
 			s->addEntry(_("NETPLAY SETTINGS"), true, [this] { openNetplaySettings(); }, "iconNetplay");
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::BIOSINFORMATION))
 		{
 			s->addEntry(_("MISSING BIOS CHECK"), true, [this, s] { openMissingBiosSettings(); });
@@ -2525,7 +2525,7 @@ void GuiMenu::openSystemSettings()
         s->addEntry(_("MULTISCREENS"), true, [this] { openMultiScreensSettings(); });
 #endif
 
-#if defined(BATOCERA) || defined(ARCH R)
+#if defined(BATOCERA) || defined(ARCHR)
 	int red, green, blue;
 	bool ledSupported = ApiSystem::getInstance()->getLED(red, green, blue);
 
@@ -2930,7 +2930,7 @@ void GuiMenu::openSystemOptionsConfiguration(Window* mWindow, std::string config
 		}
 	});
 
-#if defined(ARCH R)
+#if defined(ARCHR)
 	// Per game/core/emu Mangohud
 	if (Utils::Platform::GetEnv("DEVICE_MANGOHUD_SUPPORT") == "true"){
 		auto mangohud = std::make_shared<OptionListComponent<std::string>>(mWindow, _("MANGOHUD OVERLAY"));
@@ -3266,14 +3266,14 @@ void GuiMenu::addFeatureItem(Window* window, GuiSettings* settings, const Custom
 	{
 		item->add(_("AUTO"), "auto", storedValue.empty() || storedValue == "auto");
 
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 		auto shaders = ApiSystem::getInstance()->getShaderList(configName != "global" ? system : "", configName != "global" ? emulator : "", configName != "global" ? core : "");
 		if (shaders.size() > 0)
 		{
 #endif
 			item->add(_("NONE"), "none", storedValue == "none");
 
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 			for (auto shader : shaders)
 			  item->add(pgettext("game_options", Utils::String::toUpper(shader).c_str()), shader, storedValue == shader);
 		}
@@ -3287,14 +3287,14 @@ void GuiMenu::addFeatureItem(Window* window, GuiSettings* settings, const Custom
 	{
 		item->add(_("AUTO"), "auto", storedValue.empty() || storedValue == "auto");
 
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 		auto videofilters = ApiSystem::getInstance()->getVideoFilterList(configName != "global" ? system : "", configName != "global" ? emulator : "", configName != "global" ? core : "");
 		if (videofilters.size() > 0)
 		{
 #endif
 			item->add(_("NONE"), "none", storedValue == "none");
 
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 			for (auto videofilter : videofilters)
 				item->add(pgettext("game_options", Utils::String::toUpper(videofilter).c_str()), videofilter, storedValue == videofilter);
 		}
@@ -3563,7 +3563,7 @@ void GuiMenu::openGamesSettings()
 	if (SystemData::isNetplayActivated() && ApiSystem::getInstance()->isScriptingSupported(ApiSystem::NETPLAY))
 		s->addEntry(_("NETPLAY SETTINGS"), true, [this] { openNetplaySettings(); }, "iconNetplay");
 
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 	// Missing Bios
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::BIOSINFORMATION))
 	{
@@ -3651,7 +3651,7 @@ void GuiMenu::openGamesSettings()
 	// Shaders preset
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SHADERS) && !hasGlobalFeature("shaderset"))
 	{
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 		auto installedShaders = ApiSystem::getInstance()->getShaderList("", "", "");
 		if (installedShaders.size() > 0)
 		{
@@ -3662,7 +3662,7 @@ void GuiMenu::openGamesSettings()
 			shaders_choices->add(_("AUTO"), "auto", currentShader.empty() || currentShader == "auto");
 			shaders_choices->add(_("NONE"), "none", currentShader == "none");
 
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 			for (auto shader : installedShaders)
 				shaders_choices->add(_(Utils::String::toUpper(shader).c_str()), shader, currentShader == shader);
 			
@@ -3676,13 +3676,13 @@ void GuiMenu::openGamesSettings()
 
 			s->addWithLabel(_("SHADER SET"), shaders_choices);
 			s->addSaveFunc([shaders_choices] { SystemConf::getInstance()->set("global.shaderset", shaders_choices->getSelected()); });
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 		}
 #endif
 	}
 
 	// Video Filters
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::VIDEOFILTERS) && !hasGlobalFeature("videofilters"))
 	{
 		auto installedVideofilters = ApiSystem::getInstance()->getVideoFilterList("", "", "");
@@ -3698,7 +3698,7 @@ void GuiMenu::openGamesSettings()
 			videofilters_choices->add(_("AUTO"), "auto", currentVideofilter.empty() || currentVideofilter == "auto");
 			videofilters_choices->add(_("NONE"), "none", currentVideofilter == "none");
 
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 			for (auto videofilter : installedVideofilters)
 				videofilters_choices->add(_(Utils::String::toUpper(videofilter).c_str()), videofilter, currentVideofilter == videofilter);
 
@@ -3712,7 +3712,7 @@ void GuiMenu::openGamesSettings()
 
 			s->addWithLabel(_("VIDEO FILTER"), videofilters_choices);
 			s->addSaveFunc([videofilters_choices] { SystemConf::getInstance()->set("global.videofilters", videofilters_choices->getSelected()); });
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 		}
 #endif
 	}
@@ -4478,7 +4478,7 @@ void GuiMenu::openThemeConfiguration(Window* mWindow, GuiComponent* s, std::shar
 				if (Settings::getInstance()->setString(system->getName() + ".ShowCheevosIcon", showCheevos->getSelected()))
 					themeconfig->setVariable("reloadAll", true);
 			});
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 		// Show gun icons
 		auto defGI = Settings::getInstance()->getBool("ShowGunIconOnGames") ? _("YES") : _("NO");
 		auto curGI = Settings::getInstance()->getString(system->getName() + ".ShowGunIconOnGames");
@@ -4850,7 +4850,7 @@ void GuiMenu::openUISettings()
 		}		
 	}
 
-#if defined(ARCH R)
+#if defined(ARCHR)
 	s->addGroup(_("CONTROL OPTIONS"));
 	auto invertJoy = std::make_shared<SwitchComponent>(mWindow);
 	invertJoy->setState(Settings::getInstance()->getBool("InvertButtons"));
@@ -4899,7 +4899,7 @@ void GuiMenu::openUISettings()
 		s->addOptionList(_("SHOW BATTERY STATUS"), { { _("NO"), "" },{ _("ICON"), "icon" },{ _("ICON AND TEXT"), "text" } }, "ShowBattery", true);
 
 	s->addGroup(_("GAMELIST OPTIONS"));
-#if defined(ARCH R)
+#if defined(ARCHR)
 	// Enable Video Previews
 	auto enable_preview = std::make_shared<SwitchComponent>(mWindow);
 	enable_preview->setState(Settings::getInstance()->getBool("EnableVideoPreviews"));
@@ -4927,7 +4927,7 @@ void GuiMenu::openUISettings()
 	s->addSwitch(_("SHOW SAVESTATE ICON"), "ShowSaveStates", true, [s] { s->setVariable("reloadAll", true); });
 	s->addSwitch(_("SHOW MANUAL ICON"), "ShowManualIcon", true, [s] { s->setVariable("reloadAll", true); });	
 	s->addSwitch(_("SHOW RETROACHIEVEMENTS ICON"), "ShowCheevosIcon", true, [s] { s->setVariable("reloadAll", true); });
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 	s->addSwitch(_("SHOW GUN ICON"), "ShowGunIconOnGames", true, [s] { s->setVariable("reloadAll", true); });
 	s->addSwitch(_("SHOW WHEEL ICON"), "ShowWheelIconOnGames", true, [s] { s->setVariable("reloadAll", true); });
 	s->addSwitch(_("SHOW TRACKBALL ICON"), "ShowTrackballIconOnGames", true, [s] { s->setVariable("reloadAll", true); });
@@ -5928,7 +5928,7 @@ void GuiMenu::popSpecificConfigurationGui(Window* mWindow, std::string title, st
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::SHADERS) &&
 		systemData->isFeatureSupported(currentEmulator, currentCore, EmulatorFeatures::shaders))
 	{
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 		auto installedShaders = ApiSystem::getInstance()->getShaderList(systemData->getName(), currentEmulator, currentCore);
 		if (installedShaders.size() > 0)
 		{
@@ -5939,7 +5939,7 @@ void GuiMenu::popSpecificConfigurationGui(Window* mWindow, std::string title, st
 			shaders_choices->add(_("AUTO"), "auto", currentShader.empty() || currentShader == "auto");
 			shaders_choices->add(_("NONE"), "none", currentShader == "none");
 
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 			for (auto shader : installedShaders)
 				shaders_choices->add(_(Utils::String::toUpper(shader).c_str()), shader, currentShader == shader);
 
@@ -5953,13 +5953,13 @@ void GuiMenu::popSpecificConfigurationGui(Window* mWindow, std::string title, st
 
 			systemConfiguration->addWithLabel(_("SHADER SET"), shaders_choices);
 			systemConfiguration->addSaveFunc([configName, shaders_choices] { SystemConf::getInstance()->set(configName + ".shaderset", shaders_choices->getSelected()); });
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 		}
 #endif
 	}
 
 	// Video Filters preset
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::VIDEOFILTERS) &&
 		systemData->isFeatureSupported(currentEmulator, currentCore, EmulatorFeatures::videofilters))
 	{
@@ -5977,7 +5977,7 @@ void GuiMenu::popSpecificConfigurationGui(Window* mWindow, std::string title, st
 			videofilters_choices->add(_("AUTO"), "auto", currentVideofilter.empty() || currentVideofilter == "auto");
 			videofilters_choices->add(_("NONE"), "none", currentVideofilter == "none");
 
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 			for (auto videofilter : installedVideofilters)
 				videofilters_choices->add(_(Utils::String::toUpper(videofilter).c_str()), videofilter, currentVideofilter == videofilter);
 
@@ -5991,7 +5991,7 @@ void GuiMenu::popSpecificConfigurationGui(Window* mWindow, std::string title, st
 
 			systemConfiguration->addWithLabel(_("VIDEO FILTER"), videofilters_choices);
 			systemConfiguration->addSaveFunc([configName, videofilters_choices] { SystemConf::getInstance()->set(configName + ".videofilter", videofilters_choices->getSelected()); });
-#if !defined(ARCH R)
+#if !defined(ARCHR)
 		}
 #endif
 	}
