@@ -82,6 +82,20 @@ ApiSystem::ApiSystem() { }
 ApiSystem* ApiSystem::instance = nullptr;
 ApiSystem::LED_TYPE ApiSystem::mSystemLedType = ApiSystem::LED_TYPE_NONE;
 
+// Escape a string for safe use as a single-quoted shell argument.
+// Prevents command injection via $, `, ;, |, &, etc.
+static std::string escapeShellArg(const std::string& arg)
+{
+	std::string escaped = arg;
+	size_t pos = 0;
+	while ((pos = escaped.find("'", pos)) != std::string::npos)
+	{
+		escaped.replace(pos, 1, "'\\''");
+		pos += 4;
+	}
+	return "'" + escaped + "'";
+}
+
 ApiSystem *ApiSystem::getInstance() 
 {
 	if (ApiSystem::instance == nullptr)
@@ -184,7 +198,7 @@ bool ApiSystem::setOverclock(std::string mode)
 	if (mode.empty())
 		return false;
 
-	return executeScript("batocera-overclock set " + mode);
+	return executeScript("batocera-overclock set " + escapeShellArg(mode));
 }
 
 // BusyComponent* ui
@@ -225,7 +239,7 @@ std::pair<std::string, int> ApiSystem::backupSystem(BusyComponent* ui, std::stri
 {
 	LOG(LogDebug) << "ApiSystem::backupSystem";
 
-	std::string updatecommand = "archr-sync sync " + device;
+	std::string updatecommand = "archr-sync sync " + escapeShellArg(device);
 	FILE* pipe = popen(updatecommand.c_str(), "r");
 	if (pipe == NULL)
 		return std::pair<std::string, int>(std::string("Cannot call sync command"), -1);
@@ -254,7 +268,7 @@ std::pair<std::string, int> ApiSystem::installSystem(BusyComponent* ui, std::str
 {
 	LOG(LogDebug) << "ApiSystem::installSystem";
 
-	std::string updatecommand = "batocera-install install " + device + " " + architecture;
+	std::string updatecommand = "batocera-install install " + escapeShellArg(device) + " " + escapeShellArg(architecture);
 	FILE *pipe = popen(updatecommand.c_str(), "r");
 	if (pipe == NULL)
 		return std::pair<std::string, int>(std::string("Cannot call install command"), -1);
@@ -524,22 +538,22 @@ void ApiSystem::stopBluetoothLiveDevices()
 
 bool ApiSystem::pairBluetoothDevice(const std::string& deviceName)
 {
-	return executeScript("archr-bluetooth trust " + deviceName);
+	return executeScript("archr-bluetooth trust " + escapeShellArg(deviceName));
 }
 
 bool ApiSystem::connectBluetoothDevice(const std::string& deviceName)
 {
-	return executeScript("archr-bluetooth connect " + deviceName);
+	return executeScript("archr-bluetooth connect " + escapeShellArg(deviceName));
 }
 
 bool ApiSystem::disconnectBluetoothDevice(const std::string& deviceName)
 {
-	return executeScript("archr-bluetooth disconnect " + deviceName);
+	return executeScript("archr-bluetooth disconnect " + escapeShellArg(deviceName));
 }
 
 bool ApiSystem::removeBluetoothDevice(const std::string& deviceName)
 {
-	return executeScript("archr-bluetooth remove " + deviceName);
+	return executeScript("archr-bluetooth remove " + escapeShellArg(deviceName));
 }
 
 bool ApiSystem::scanNewBluetooth(const std::function<void(const std::string)>& func)
@@ -704,17 +718,17 @@ std::string ApiSystem::getRumblePath()
 
 bool ApiSystem::setStorage(std::string selected) 
 {
-	return executeScript("archr-config storage " + selected);
+	return executeScript("archr-config storage " + escapeShellArg(selected));
 }
 
 bool ApiSystem::setButtonColorGameForce(std::string selected)
 {
-	return executeScript("batocera-gameforce buttonColorLed " + selected);
+	return executeScript("batocera-gameforce buttonColorLed " + escapeShellArg(selected));
 }
 
 bool ApiSystem::setPowerLedGameForce(std::string selected)
 {
-	return executeScript("batocera-gameforce powerLed " + selected);
+	return executeScript("batocera-gameforce powerLed " + escapeShellArg(selected));
 }
 
 bool ApiSystem::forgetBluetoothControllers() 
@@ -1170,12 +1184,12 @@ std::vector<BatoceraBezel> ApiSystem::getBatoceraBezelsList()
 
 std::pair<std::string, int> ApiSystem::installBatoceraBezel(std::string bezelsystem, const std::function<void(const std::string)>& func)
 {
-	return executeScript("archr-es-thebezelproject install " + bezelsystem, func);
+	return executeScript("archr-es-thebezelproject install " + escapeShellArg(bezelsystem), func);
 }
 
 std::pair<std::string, int> ApiSystem::uninstallBatoceraBezel(std::string bezelsystem, const std::function<void(const std::string)>& func)
 {
-	return executeScript("archr-es-thebezelproject remove " + bezelsystem, func);
+	return executeScript("archr-es-thebezelproject remove " + escapeShellArg(bezelsystem), func);
 }
 
 std::string ApiSystem::getMD5(const std::string fileName, bool fromZipContents)
@@ -1978,7 +1992,7 @@ std::vector<std::string> ApiSystem::getFormatFileSystems()
 
 int ApiSystem::formatDisk(const std::string disk, const std::string format, const std::function<void(const std::string)>& func)
 {
-	return executeScript("batocera-format format " + disk + " " + format, func).second;
+	return executeScript("batocera-format format " + escapeShellArg(disk) + " " + escapeShellArg(format), func).second;
 }
 
 int ApiSystem::getPdfPageCount(const std::string& fileName)
@@ -2165,12 +2179,12 @@ std::vector<PacmanPackage> ApiSystem::getBatoceraStorePackages()
 
 std::pair<std::string, int> ApiSystem::installBatoceraStorePackage(std::string name, const std::function<void(const std::string)>& func)
 {
-	return executeScript("batocera-store install \"" + name + "\"", func);
+	return executeScript("batocera-store install " + escapeShellArg(name), func);
 }
 
 std::pair<std::string, int> ApiSystem::uninstallBatoceraStorePackage(std::string name, const std::function<void(const std::string)>& func)
 {
-	return executeScript("batocera-store remove \"" + name + "\"", func);
+	return executeScript("batocera-store remove " + escapeShellArg(name), func);
 }
 
 void ApiSystem::refreshBatoceraStorePackageList()
@@ -2317,7 +2331,7 @@ bool ApiSystem::setTimezone(std::string tz)
 {
 	if (tz.empty())
 		return false;
-	return executeScript("batocera-timezone set \"" + tz + "\"");
+	return executeScript("batocera-timezone set " + escapeShellArg(tz));
 }
 
 std::vector<PadInfo> ApiSystem::getPadsInfo()
@@ -2573,7 +2587,7 @@ void ApiSystem::setJoysticksHotkeys(const std::vector<Hotkey>& hotkeys) {
 
   std::string params;
   for(unsigned int h = 0; h < hotkeys.size(); h++) {
-    params = params + " --" + hotkeys[h].button + " " + hotkeys[h].action;
+    params = params + " --" + escapeShellArg(hotkeys[h].button) + " " + escapeShellArg(hotkeys[h].action);
   }
   executeScript("batocera-joysticks-hotkeys " + params);
 }
@@ -2786,12 +2800,12 @@ std::vector<KeyboardtopadDevice> ApiSystem::getKeyboardtopadDevices(std::string 
 
 void ApiSystem::setGlobalHotkey(const std::string& config, const std::string& key, const std::string& action) {
   LOG(LogDebug) << "ApiSystem::setGlobalHotkey";
-  executeScript("batocera-hotkeys --set --config " + config + " --key " + key + " --action " + action);
+  executeScript("batocera-hotkeys --set --config " + escapeShellArg(config) + " --key " + escapeShellArg(key) + " --action " + escapeShellArg(action));
 }
 
 void ApiSystem::removeGlobalHotkey(const std::string& config, const std::string& key) {
   LOG(LogDebug) << "ApiSystem::removeGlobalHotkey";
-  executeScript("batocera-hotkeys --remove --config " + config + " --key " + key);
+  executeScript("batocera-hotkeys --remove --config " + escapeShellArg(config) + " --key " + escapeShellArg(key));
 }
 
 std::vector<KeyboardtopadKey> ApiSystem::getKeyboardtopadKeyValues() {
@@ -2896,7 +2910,7 @@ std::string ApiSystem::detectEvKey(const std::string& device_path) {
 
   LOG(LogDebug) << "ApiSystem::detectEvKey";
 
-  auto res = executeEnumerationScript("batocera-hotkeys --detect --count 1 --nowait --evformat --device " + device_path);
+  auto res = executeEnumerationScript("batocera-hotkeys --detect --count 1 --nowait --evformat --device " + escapeShellArg(device_path));
 
   std::string data = Utils::String::join(res, "\n");
   if (data.empty())
@@ -2951,12 +2965,10 @@ void ApiSystem::restartBackglass() {
 bool ApiSystem::enableService(std::string name, bool enable) 
 {
 	std::string serviceName = name;
-	if (serviceName.find(" ") != std::string::npos)
-		serviceName = "\"" + serviceName + "\"";
 
 	LOG(LogDebug) << "ApiSystem::enableService " << serviceName;
 
-	bool res = executeScript("batocera-services " + std::string(enable ? "enable" : "disable") + " " + serviceName);
+	bool res = executeScript("batocera-services " + std::string(enable ? "enable" : "disable") + " " + escapeShellArg(serviceName));
 	if (res)
 		res = executeScript("batocera-services " + std::string(enable ? "start" : "stop") + " " + serviceName);
 	
@@ -2970,25 +2982,25 @@ std::vector<std::string> ApiSystem::getEjectableDrives()
 
 bool ApiSystem::ejectDrive(const std::string& mountPath)
 {
-    std::string cmd = "batocera-storage-manager eject \"" + mountPath + "\"";
+    std::string cmd = "batocera-storage-manager eject " + escapeShellArg(mountPath);
     return executeScript(cmd);
 }
 
 bool ApiSystem::mergeDrive(const std::string& mountPath)
 {
-    std::string cmd = "batocera-storage-manager merge \"" + mountPath + "\"";
+    std::string cmd = "batocera-storage-manager merge " + escapeShellArg(mountPath);
     return executeScript(cmd);
 }
 
 bool ApiSystem::prepareDrive(const std::string& device, const std::string& fsType)
 {
-    std::string cmd = "batocera-storage-manager format \"" + device + "\" \"" + fsType + "\"";
+    std::string cmd = "batocera-storage-manager format " + escapeShellArg(device) + " " + escapeShellArg(fsType);
     return executeScript(cmd);
 }
 
 bool ApiSystem::ignoreDevicePermanently(const std::string& deviceId)
 {
-    std::string cmd = "batocera-storage-manager ignore \"" + deviceId + "\"";
+    std::string cmd = "batocera-storage-manager ignore " + escapeShellArg(deviceId);
     return executeScript(cmd);
 }
 
@@ -2997,6 +3009,6 @@ bool ApiSystem::nfc_is_available() {
 }
 
 bool ApiSystem::nfc_write(const std::string& game) {
-  std::string cmd = "batocera-nfc --write \"" + game + "\"";
+  std::string cmd = "batocera-nfc --write " + escapeShellArg(game);
   return executeScript(cmd);
 }
