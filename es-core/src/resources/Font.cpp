@@ -56,7 +56,7 @@ size_t Font::getMemUsage() const
 {
 	size_t memUsage = 0;
 	
-	for(auto tex : mTextures)
+	for(const auto& tex : mTextures)
 		memUsage += (tex->textureId != 0 ? tex->textureSize.x() * tex->textureSize.y() * 4 : 0);
 
 	for(auto it = mFaceCache.cbegin(); it != mFaceCache.cend(); it++)
@@ -117,10 +117,6 @@ Font::Font(int size, const std::string& path, bool menuScaling) : mSize(size), m
 Font::~Font()
 {
 	unload();
-
-	for (auto tex : mTextures)
-		delete tex;
-
 	mTextures.clear();
 }
 
@@ -141,7 +137,7 @@ bool Font::unload()
 {
 	if (mLoaded)
 	{		
-		for (auto tex : mTextures)
+		for (auto& tex : mTextures)
 			tex->deinitTexture();
 
 		clearFaceCache();
@@ -239,7 +235,7 @@ void Font::getTextureForNewGlyph(const Vector2i& glyphSize, FontTexture*& tex_ou
 	if(mTextures.size())
 	{
 		// check if the most recent texture has space
-		tex_out = mTextures.back();
+		tex_out = mTextures.back().get();
 
 		// will this one work?
 		if(tex_out->findEmpty(glyphSize, cursor_out))
@@ -250,7 +246,7 @@ void Font::getTextureForNewGlyph(const Vector2i& glyphSize, FontTexture*& tex_ou
 
 	// current textures are full,
 	// make a new one
-	FontTexture* tex = new FontTexture();
+	auto tex = std::make_unique<FontTexture>();
 
 	int x = Math::min(2048, mSize * 64);
 	int y = Math::min(2048, Math::max(glyphSize.y(), mSize) + 2) * 1.2;
@@ -258,16 +254,17 @@ void Font::getTextureForNewGlyph(const Vector2i& glyphSize, FontTexture*& tex_ou
 	tex->textureSize = Vector2i(x, y);
 	tex->initTexture();
 
-	tex_out = tex;
+	tex_out = tex.get();
 
-	mTextures.push_back(tex);
-	
 	bool ok = tex_out->findEmpty(glyphSize, cursor_out);
 	if(!ok)
 	{
 		LOG(LogError) << "Glyph too big to fit on a new texture (glyph size > " << tex_out->textureSize.x() << ", " << tex_out->textureSize.y() << ")!";
-		delete tex;
 		tex_out = NULL;
+	}
+	else
+	{
+		mTextures.push_back(std::move(tex));
 	}
 }
 
@@ -428,7 +425,7 @@ Font::Glyph* Font::getGlyph(unsigned int id)
 void Font::rebuildTextures()
 {
 	// recreate OpenGL textures
-	for(auto tex : mTextures)
+	for(auto& tex : mTextures)
 		tex->initTexture();
 
 	// reupload the texture data

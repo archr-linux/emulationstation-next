@@ -131,9 +131,9 @@ std::shared_ptr<TextureResource> TextureResource::get(const std::string& path, b
 	auto foundTexture = sTextureMap.find(key);
 	if (foundTexture != sTextureMap.cend())
 	{
-		if (!foundTexture->second.expired())
+		std::shared_ptr<TextureResource> rc = foundTexture->second.lock();
+		if (rc)
 		{
-			std::shared_ptr<TextureResource> rc = foundTexture->second.lock();
 
 			if (maxSize != nullptr && !maxSize->empty() && Settings::getInstance()->getBool("OptimizeVRAM"))
 			{

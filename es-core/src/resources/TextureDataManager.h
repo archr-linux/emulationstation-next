@@ -2,6 +2,7 @@
 #ifndef ES_CORE_RESOURCES_TEXTURE_DATA_MANAGER_H
 #define ES_CORE_RESOURCES_TEXTURE_DATA_MANAGER_H
 
+#include <atomic>
 #include <condition_variable>
 #include <list>
 #include <map>
@@ -28,7 +29,7 @@ public:
 
 	size_t getQueueSize();
 
-	static bool paused;
+	static std::atomic<bool> paused;
 
 	std::mutex& Mutex() { return mLoaderLock; }
 
@@ -109,7 +110,7 @@ private:
 	std::list<std::shared_ptr<TextureData> >												mTextures;
 	std::unordered_map<const TextureResource*, std::list<std::shared_ptr<TextureData> >::const_iterator > 	mTextureLookup;
 	std::shared_ptr<TextureData>															mBlank;
-	TextureLoader*																			mLoader;
+	std::unique_ptr<TextureLoader>															mLoader;
 };
 
 #endif // ES_CORE_RESOURCES_TEXTURE_DATA_MANAGER_H

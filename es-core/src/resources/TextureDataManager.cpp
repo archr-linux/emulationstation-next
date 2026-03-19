@@ -9,12 +9,11 @@
 
 TextureDataManager::TextureDataManager()
 {
-	mLoader = new TextureLoader(this);
+	mLoader = std::make_unique<TextureLoader>(this);
 }
 
 TextureDataManager::~TextureDataManager()
 {
-	delete mLoader;
 }
 
 std::shared_ptr<TextureData> TextureDataManager::add(const TextureResource* key, bool tiled, bool linear)
@@ -329,7 +328,7 @@ void TextureLoader::threadProc()
 	}
 }
 
-bool TextureLoader::paused = false;
+std::atomic<bool> TextureLoader::paused{false};
 
 void TextureLoader::load(std::shared_ptr<TextureData> textureData)
 {

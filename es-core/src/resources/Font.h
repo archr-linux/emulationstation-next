@@ -9,6 +9,7 @@
 #include "ThemeData.h"
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include <memory>
 #include <vector>
 
 class TextCache;
@@ -115,7 +116,7 @@ private:
 
 	void rebuildTextures();
 
-	std::vector<FontTexture*> mTextures;
+	std::vector<std::unique_ptr<FontTexture>> mTextures;
 
 	void getTextureForNewGlyph(const Vector2i& glyphSize, FontTexture*& tex_out, Vector2i& cursor_out);
 
