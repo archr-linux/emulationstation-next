@@ -1,4 +1,5 @@
 #include "LocaleES.h"
+#include "Log.h"
 #include <iostream>
 
 #define PACKAGE_LANG "emulationstation2"
@@ -53,28 +54,36 @@ std::string EsLocale::init(std::string locale, std::string path) {
 	envv = getenv("LANGUAGE");
 	if (envv != NULL) {
 		default_LANGUAGE = envv;
+		LOG(LogInfo) << "EsLocale::init - LANGUAGE env = " << envv;
 	}
 
 	nlocale = changeLocale(locale);
 
 	if (nlocale == "") {
+		LOG(LogWarning) << "EsLocale::init - changeLocale failed for '" << locale << "'";
 		return locale;
 	}
 
 	textdomain(PACKAGE_LANG);
 	if ((btd = bindtextdomain(PACKAGE_LANG, path.c_str())) == NULL) {
+		LOG(LogError) << "EsLocale::init - bindtextdomain failed for path: " << path;
 		return "";
 	}
+
+	LOG(LogInfo) << "EsLocale::init - bound textdomain to: " << btd;
 
 	cs = bind_textdomain_codeset(PACKAGE_LANG, "UTF-8");
 
 	if (cs == NULL) {
-		/* outch not enough memory, no real thing to do */
+		LOG(LogWarning) << "EsLocale::init - bind_textdomain_codeset failed";
 		return locale;
 	}
 
+	LOG(LogInfo) << "EsLocale::init - locale initialized: " << nlocale << " from " << path;
 	return nlocale;
 
+#else
+	LOG(LogWarning) << "EsLocale::init - HAVE_INTL not defined, translations disabled";
 #endif
 	return "";
 }

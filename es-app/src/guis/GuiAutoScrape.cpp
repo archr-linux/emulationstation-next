@@ -11,6 +11,7 @@
 #include "Settings.h"
 #include "ApiSystem.h"
 #include "LocaleES.h"
+#include "utils/StringUtil.h"
 
 GuiAutoScrape::GuiAutoScrape(Window* window) : GuiComponent(window), mBusyAnim(window)
 {
@@ -103,7 +104,7 @@ void GuiAutoScrape::onAutoScrapeError(std::pair<std::string, int> result)
     mLoading = false;
     mState = 5;
     mResult = result;
-    mResult.first = _("AN ERROR OCCURRED") + std::string(": ") + mResult.first;
+    mResult.first = Utils::String::format(_("AN ERROR OCCURRED: %s").c_str(), mResult.first.c_str());
 }
 
 void GuiAutoScrape::onAutoScrapeOk()

@@ -498,6 +498,12 @@ if(NOT WIN32)
 	  endif()
 	endif()
 
+	# Allow build system to force Intl_Found (for cross-compilation where detection fails)
+	if(Intl_IS_BUILT_IN AND NOT Intl_FOUND)
+	  set(Intl_FOUND TRUE)
+	  message(STATUS "Intl_FOUND forced via Intl_IS_BUILT_IN.")
+	endif()
+
 	if(MSGFMT_EXECUTABLE AND MSGMERGE_EXECUTABLE AND XGETTEXT_EXECUTABLE AND Intl_FOUND)
 	  message (STATUS "Native language support enabled.")
 	  add_definitions(-DHAVE_INTL)

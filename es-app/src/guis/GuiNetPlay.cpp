@@ -7,6 +7,7 @@
 #include "Settings.h"
 #include "SystemConf.h"
 #include "LocaleES.h"
+#include "utils/StringUtil.h"
 #include "HttpReq.h"
 #include "AsyncHandle.h"
 #include "guis/GuiMsgBox.h"
@@ -313,7 +314,7 @@ void GuiNetPlay::update(int deltaTime)
 		populateFromJson(mLobbyRequest->getContent());
 
 	if (status != HttpReq::REQ_SUCCESS)
-		mWindow->pushGui(new GuiMsgBox(mWindow, _("FAILED") + std::string(" : ") + mLobbyRequest->getErrorMsg()));
+		mWindow->pushGui(new GuiMsgBox(mWindow, Utils::String::format(_("FAILED: %s").c_str(), mLobbyRequest->getErrorMsg().c_str())));
 
 	if (mList->size() != 0)
 		mList->setCursorIndex(0, true);

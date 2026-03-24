@@ -12,6 +12,7 @@
 #include "GuiLoading.h"
 #include <cstring>
 #include "SystemConf.h"
+#include "utils/StringUtil.h"
 
 #define WINDOW_WIDTH (float)Math::min(Renderer::getScreenHeight() * 1.125f, Renderer::getScreenWidth() * 0.90f)
 
@@ -157,7 +158,7 @@ void GuiBezelInstaller::processBezel(BatoceraBezel bezel)
 				mWindow->displayNotificationMessage(_U("\uF019 ") + bezel.name + " : " + _("BEZELS UNINSTALLED SUCCESSFULLY"));
 			else
 			{
-				std::string error = _("AN ERROR OCCURRED") + std::string(": ") + updateStatus.first;
+				std::string error = Utils::String::format(_("AN ERROR OCCURRED: %s").c_str(), updateStatus.first.c_str());
 				mWindow->displayNotificationMessage(_U("\uF019 ") + error);
 			}
 

@@ -324,10 +324,14 @@ int setLocale(char * argv1)
 #if WIN32
 	std::locale::global(std::locale("en-US"));
 #else
+	std::string localeResult;
 	if (Utils::FileSystem::exists("./locale/lang")) // for local builds
-		EsLocale::init("", "./locale/lang");	
+		localeResult = EsLocale::init("", "./locale/lang");
 	else
-		EsLocale::init("", "/usr/share/locale");	
+		localeResult = EsLocale::init("", "/usr/share/locale");
+
+	if (localeResult.empty())
+		LOG(LogWarning) << "Locale initialization returned empty - translations may not work";
 #endif
 
 	setlocale(LC_TIME, "");

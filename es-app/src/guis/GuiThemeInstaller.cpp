@@ -281,7 +281,7 @@ void GuiThemeInstaller::processTheme(BatoceraTheme theme, bool isCurrentTheme)
 					mWindow->displayNotificationMessage(_U("\uF019 ") + theme.name + " : " + _("THEME UNINSTALLED SUCCESSFULLY"));
 				else
 				{
-					std::string error = _("AN ERROR OCCURRED") + std::string(": ") + updateStatus.first;
+					std::string error = Utils::String::format(_("AN ERROR OCCURRED: %s").c_str(), updateStatus.first.c_str());
 					mWindow->displayNotificationMessage(_U("\uF019 ") + error);
 				}
 

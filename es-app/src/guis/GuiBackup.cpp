@@ -7,6 +7,7 @@
 #include "Settings.h"
 #include "ApiSystem.h"
 #include "LocaleES.h"
+#include "utils/StringUtil.h"
 
 GuiBackup::GuiBackup(Window* window, std::string storageDevice) : GuiComponent(window), mBusyAnim(window)
 {
@@ -97,7 +98,7 @@ void GuiBackup::onBackupError(std::pair<std::string, int> result)
     mLoading = false;
     mState = 3;
     mResult = result;
-    mResult.first = _("AN ERROR OCCURRED") + std::string(": check the system/logs directory");
+    mResult.first = _("AN ERROR OCCURRED: check the system/logs directory");
 }
 
 void GuiBackup::onBackupOk()
