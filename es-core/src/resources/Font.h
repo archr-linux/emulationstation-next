@@ -42,6 +42,8 @@ enum Alignment
 //The library is automatically initialized when it's needed.
 class Font : public IReloadable
 {
+	class FontTexture; // forward declaration for Glyph
+
 public:
 	static void initLibrary();
 
@@ -78,6 +80,22 @@ public:
 
 	size_t getMemUsage() const; // returns an approximation of VRAM used by this font's texture (in bytes)
 	static size_t getTotalMemUsage(); // returns an approximation of total VRAM used by font textures (in bytes)
+
+	struct Glyph
+	{
+		FontTexture* texture;
+
+		Vector2f texPos;
+		Vector2f texSize; // in texels!
+
+		Vector2f advance;
+		Vector2f bearing;
+
+		Vector2i cursor;
+		Vector2i glyphSize;
+	};
+
+	Glyph* getGlyph(unsigned int id);
 
 private:
 	void renderSingleGlow(TextCache* cache, const Transform4x4f& parentTrans, float x, float y, bool verticesChanged = true);
@@ -124,24 +142,8 @@ private:
 	FT_Face getFaceForChar(unsigned int id);
 	void clearFaceCache();
 
-	struct Glyph
-	{
-		FontTexture* texture;
-		
-		Vector2f texPos;
-		Vector2f texSize; // in texels!
-
-		Vector2f advance;
-		Vector2f bearing;
-
-		Vector2i cursor;
-		Vector2i glyphSize;
-	};
-
 	Glyph* mGlyphCacheArray[255]; // used to cache 255 first chars
 	std::map<unsigned int, Glyph*> mGlyphMap;
-
-	Glyph* getGlyph(unsigned int id);
 
 	int mMaxGlyphHeight;
 	

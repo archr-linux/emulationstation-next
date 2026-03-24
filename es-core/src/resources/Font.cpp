@@ -928,6 +928,11 @@ TextCache* Font::buildTextCache(const std::string& _text, Vector2f offset, unsig
 	bool inParenthesis = false;
 	bool inBlock = false;
 
+	// Track metrics during vertex generation to avoid redundant sizeText() call
+	float metricsHighestWidth = 0.0f;
+	float metricsLineWidth = 0.0f;
+	float metricsY = getHeight(lineSpacing);
+
 	tabIndex = 0;
 	size_t cursor = 0;
 	while(cursor < text.length())
@@ -969,7 +974,9 @@ TextCache* Font::buildTextCache(const std::string& _text, Vector2f offset, unsig
 
 				imageSubstitutes.push_back(is);
 
-				x += yBot - (2.0f*padding);
+				float advance = yBot - (2.0f*padding);
+				x += advance;
+				metricsLineWidth += advance;
 				continue;
 			}
 		}
@@ -988,6 +995,11 @@ TextCache* Font::buildTextCache(const std::string& _text, Vector2f offset, unsig
 			tabIndex = 0;
 			y += getHeight(lineSpacing);
 			x = offset[0] + (xLen != 0 ? getNewlineStartOffset(text, (const unsigned int)cursor /* cursor is already advanced */, xLen, alignment) : 0);
+
+			if (metricsLineWidth > metricsHighestWidth)
+				metricsHighestWidth = metricsLineWidth;
+			metricsLineWidth = 0.0f;
+			metricsY += getHeight(lineSpacing);
 			continue;
 		}
 
@@ -1049,13 +1061,16 @@ TextCache* Font::buildTextCache(const std::string& _text, Vector2f offset, unsig
 
 		// advance
 		x += glyph->advance.x();
+		metricsLineWidth += glyph->advance.x();
 	}
 
-	//TextCache::CacheMetrics metrics = { sizeText(text, lineSpacing) };
+	// Finalize metrics from inline tracking (avoids redundant sizeText() pass)
+	if (metricsLineWidth > metricsHighestWidth)
+		metricsHighestWidth = metricsLineWidth;
 
 	TextCache* cache = new TextCache();
 	cache->vertexLists.resize(vertMap.size());
-	cache->metrics = { sizeText(text, lineSpacing) };
+	cache->metrics = { Vector2f(metricsHighestWidth, metricsY) };
 	cache->imageSubstitutes = imageSubstitutes;
 
 	unsigned int i = 0;

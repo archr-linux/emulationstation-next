@@ -378,30 +378,32 @@ void TextComponent::buildTextCache()
 
 		if (sx && text.size() && (size.x() > (sx + 1) || addAbbrev) && (mAutoScroll == AutoScrollType::NONE))
 		{
-			// abbreviate text
+			// abbreviate text using incremental width (avoids repeated sizeText() in loop)
 			const std::string abbrev = "...";
 			Vector2f abbrevSize = f->sizeText(abbrev);
 
-			std::string textCopy = text;
+			float runningWidth = 0.0f;
+			size_t lastFitCursor = 0;
 
 			size_t cursor = 0;
-			while (cursor >= 0 && cursor < textCopy.size())
+			while (cursor < text.size())
 			{
-				auto newCursor = Utils::String::nextCursor(textCopy, cursor);
-				if (cursor == newCursor)
-					continue;
-
-				cursor = newCursor;
-				
-				std::string testText = textCopy.substr(0, cursor);
-				size = f->sizeText(testText);
-
-				if (size.x() + abbrevSize.x() > sx)
+				size_t prevCursor = cursor;
+				unsigned int character = Utils::String::chars2Unicode(text, cursor);
+				if (character == 0)
 					break;
 
-				text = testText;
+				auto glyph = f->getGlyph(character);
+				float charWidth = glyph ? glyph->advance.x() : 0.0f;
+
+				if (runningWidth + charWidth + abbrevSize.x() > sx)
+					break;
+
+				runningWidth += charWidth;
+				lastFitCursor = cursor;
 			}
 
+			text = text.substr(0, lastFitCursor);
 			text.append(abbrev);
 		}
 		else if (sx && text.size() && size.x() > (sx + 1) && mAutoScroll == AutoScrollType::HORIZONTAL)
