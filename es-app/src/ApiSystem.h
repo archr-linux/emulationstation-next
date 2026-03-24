@@ -3,6 +3,9 @@
 
 #include <string>
 #include <map>
+#include <mutex>
+#include <thread>
+#include <atomic>
 #include "Window.h"
 #include "components/BusyComponent.h"
 #include "resources/TextureData.h"
@@ -428,6 +431,23 @@ protected:
 
 private:
 	static LED_TYPE mSystemLedType;
+
+	// Background command cache for non-blocking menu queries
+	struct CmdCache
+	{
+		std::mutex mutex;
+		std::map<std::string, std::string> stringCache;
+		std::map<std::string, std::vector<std::string>> vectorCache;
+		std::atomic<bool> prefetched{false};
+	};
+	CmdCache mCache;
+
+	std::string cachedPopen(const std::string& command, const std::string& cacheKey);
+	std::vector<std::string> cachedEnumeration(const std::string& command, const std::string& cacheKey);
+	void invalidateCache(const std::string& prefix);
+
+public:
+	void prefetchMenuData();
 };
 
 #endif

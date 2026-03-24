@@ -77,7 +77,11 @@
 #define script_swissknife "batocera-es-swissknife"; // --emukill"
 */
 
-ApiSystem::ApiSystem() { }
+ApiSystem::ApiSystem()
+{
+	// Pre-fetch common menu data in background so menus open instantly
+	std::thread([this]() { prefetchMenuData(); }).detach();
+}
 
 ApiSystem* ApiSystem::instance = nullptr;
 ApiSystem::LED_TYPE ApiSystem::mSystemLedType = ApiSystem::LED_TYPE_NONE;
@@ -666,7 +670,7 @@ bool ApiSystem::generateSupportFile()
 	return executeScript("batocera-support");
 }
 
-std::string ApiSystem::getCurrentStorage() 
+std::string ApiSystem::getCurrentStorage()
 {
 	LOG(LogDebug) << "ApiSystem::getCurrentStorage";
 
@@ -674,20 +678,8 @@ std::string ApiSystem::getCurrentStorage()
 	return "DEFAULT";
 #endif
 
-	std::ostringstream oss;
-	oss << "archr-config storage current";
-	FILE *pipe = popen(oss.str().c_str(), "r");
-	char line[1024];
-
-	if (pipe == NULL)
-		return "";	
-
-	if (fgets(line, 1024, pipe)) {
-		strtok(line, "\n");
-		pclose(pipe);
-		return std::string(line);
-	}
-	return "INTERNAL";
+	std::string result = cachedPopen("archr-config storage current", "storage.current");
+	return result.empty() ? "INTERNAL" : result;
 }
 
 std::string ApiSystem::getRumblePath()
@@ -716,8 +708,9 @@ std::string ApiSystem::getRumblePath()
 	return rumblePath;
 }
 
-bool ApiSystem::setStorage(std::string selected) 
+bool ApiSystem::setStorage(std::string selected)
 {
+	invalidateCache("storage.");
 	return executeScript("archr-config storage " + escapeShellArg(selected));
 }
 
@@ -746,12 +739,12 @@ std::string ApiSystem::getRootPassword()
 	return "linux";
 }
 
-std::vector<std::string> ApiSystem::getAvailableVideoOutputDevices() 
+std::vector<std::string> ApiSystem::getAvailableVideoOutputDevices()
 {
-	return executeEnumerationScript("archr-config lsoutputs");
+	return cachedEnumeration("archr-config lsoutputs", "video.outputs");
 }
 
-std::vector<std::string> ApiSystem::getAvailableAudioOutputDevices() 
+std::vector<std::string> ApiSystem::getAvailableAudioOutputDevices()
 {
 #if WIN32
 	std::vector<std::string> res;
@@ -759,12 +752,12 @@ std::vector<std::string> ApiSystem::getAvailableAudioOutputDevices()
 	return res;
 #endif
 
-	return executeEnumerationScript("set-audio list");
+	return cachedEnumeration("set-audio list", "audio.devices");
 }
 
 std::vector<std::string> ApiSystem::getAvailableChannels()
 {
-	return executeEnumerationScript("/usr/bin/sh -lc \"/usr/bin/wifictl channels\"");
+	return cachedEnumeration("/usr/bin/sh -lc \"/usr/bin/wifictl channels\"", "wifi.channels");
 }
 
 std::vector<std::string> ApiSystem::getAvailableGovernors()
@@ -799,40 +792,23 @@ std::vector<std::string> ApiSystem::getSleepModes()
 	return executeEnumerationScript("/usr/bin/sh -lc \"echo \\\"default\\\"; tr \\\" \\\" \\\"\\n\\\" </sys/power/state | grep -v disk\"");
 }
 
-std::string ApiSystem::getCurrentAudioOutputDevice() 
+std::string ApiSystem::getCurrentAudioOutputDevice()
 {
 #if WIN32
 	return "auto";
 #endif
 
 	LOG(LogDebug) << "ApiSystem::getCurrentAudioOutputDevice";
-
-	std::ostringstream oss;
-	oss << "set-audio get";
-	FILE *pipe = popen(oss.str().c_str(), "r");
-	char line[1024];
-
-	if (pipe == NULL)
-		return "";	
-
-	if (fgets(line, 1024, pipe)) 
-	{
-		strtok(line, "\n");
-		pclose(pipe);
-		return std::string(line);
-	}
-
-	return "";
+	return cachedPopen("set-audio get", "audio.current");
 }
 
-bool ApiSystem::setAudioOutputDevice(std::string selected) 
+bool ApiSystem::setAudioOutputDevice(std::string selected)
 {
 	LOG(LogDebug) << "ApiSystem::setAudioOutputDevice";
 
-	std::ostringstream oss;
+	invalidateCache("audio.");
 
-	oss << "set-audio set" << " '" << selected << "'";
-	int exitcode = system(oss.str().c_str());
+	int exitcode = system(("set-audio set " + escapeShellArg(selected)).c_str());
 
 	Sound::get(":/checksound.ogg")->play();
 
@@ -847,44 +823,27 @@ std::vector<std::string> ApiSystem::getAvailableAudioOutputProfiles()
 	return res;
 #endif
 
-	return executeEnumerationScript("set-audio list-profiles");
+	return cachedEnumeration("set-audio list-profiles", "audio.profiles");
 }
 
-std::string ApiSystem::getCurrentAudioOutputProfile() 
+std::string ApiSystem::getCurrentAudioOutputProfile()
 {
 #if WIN32
 	return "auto";
 #endif
 
 	LOG(LogDebug) << "ApiSystem::getCurrentAudioOutputProfile";
-
-	std::ostringstream oss;
-	oss << "set-audio get-profile";
-	FILE *pipe = popen(oss.str().c_str(), "r");
-	char line[1024];
-
-	if (pipe == NULL)
-		return "";	
-
-	if (fgets(line, 1024, pipe)) 
-	{
-		strtok(line, "\n");
-		pclose(pipe);
-		return std::string(line);
-	}
-
-	return "";
+	return cachedPopen("set-audio get-profile", "audio.profile.current");
 }
 
-bool ApiSystem::setAudioOutputProfile(std::string selected) 
+bool ApiSystem::setAudioOutputProfile(std::string selected)
 {
 	LOG(LogDebug) << "ApiSystem::setAudioOutputProfile";
 
-	std::ostringstream oss;
+	invalidateCache("audio.");
 
-	oss << "set-audio set-profile" << " '" << selected << "'";
-	int exitcode = system(oss.str().c_str());
-	
+	int exitcode = system(("set-audio set-profile " + escapeShellArg(selected)).c_str());
+
 	Sound::get(":/checksound.ogg")->play();
 
 	return exitcode == 0;
@@ -1729,6 +1688,129 @@ std::vector<std::string> ApiSystem::getWifiNetworks(bool scan)
 {
 	return executeEnumerationScript(scan ? "wifictl scanlist" : "wifictl list");
 }
+
+// ---- Background command cache for non-blocking menu queries ----
+
+std::string ApiSystem::cachedPopen(const std::string& command, const std::string& cacheKey)
+{
+	{
+		std::lock_guard<std::mutex> lock(mCache.mutex);
+		auto it = mCache.stringCache.find(cacheKey);
+		if (it != mCache.stringCache.end())
+			return it->second;
+	}
+
+	// Cache miss: execute synchronously and store
+	FILE* pipe = popen(command.c_str(), "r");
+	if (pipe == nullptr)
+		return "";
+
+	char line[1024] = "";
+	if (fgets(line, 1024, pipe))
+		strtok(line, "\n");
+
+	pclose(pipe);
+
+	std::string result(line);
+
+	{
+		std::lock_guard<std::mutex> lock(mCache.mutex);
+		mCache.stringCache[cacheKey] = result;
+	}
+
+	return result;
+}
+
+std::vector<std::string> ApiSystem::cachedEnumeration(const std::string& command, const std::string& cacheKey)
+{
+	{
+		std::lock_guard<std::mutex> lock(mCache.mutex);
+		auto it = mCache.vectorCache.find(cacheKey);
+		if (it != mCache.vectorCache.end())
+			return it->second;
+	}
+
+	// Cache miss: execute synchronously and store
+	auto result = executeEnumerationScript(command);
+
+	{
+		std::lock_guard<std::mutex> lock(mCache.mutex);
+		mCache.vectorCache[cacheKey] = result;
+	}
+
+	return result;
+}
+
+void ApiSystem::invalidateCache(const std::string& prefix)
+{
+	std::lock_guard<std::mutex> lock(mCache.mutex);
+
+	for (auto it = mCache.stringCache.begin(); it != mCache.stringCache.end(); )
+	{
+		if (it->first.find(prefix) == 0)
+			it = mCache.stringCache.erase(it);
+		else
+			++it;
+	}
+
+	for (auto it = mCache.vectorCache.begin(); it != mCache.vectorCache.end(); )
+	{
+		if (it->first.find(prefix) == 0)
+			it = mCache.vectorCache.erase(it);
+		else
+			++it;
+	}
+}
+
+void ApiSystem::prefetchMenuData()
+{
+	LOG(LogDebug) << "ApiSystem::prefetchMenuData - starting background prefetch";
+
+	auto runPopen = [this](const std::string& cmd, const std::string& key) {
+		FILE* pipe = popen(cmd.c_str(), "r");
+		if (pipe == nullptr) return;
+		char line[1024] = "";
+		if (fgets(line, 1024, pipe))
+			strtok(line, "\n");
+		pclose(pipe);
+		std::lock_guard<std::mutex> lock(mCache.mutex);
+		mCache.stringCache[key] = std::string(line);
+	};
+
+	auto runEnum = [this](const std::string& cmd, const std::string& key) {
+		std::vector<std::string> res;
+		FILE* pipe = popen(cmd.c_str(), "r");
+		if (pipe == nullptr) return;
+		char line[1024];
+		while (fgets(line, 1024, pipe)) {
+			strtok(line, "\n");
+			res.push_back(std::string(line));
+		}
+		pclose(pipe);
+		std::lock_guard<std::mutex> lock(mCache.mutex);
+		mCache.vectorCache[key] = std::move(res);
+	};
+
+	// Audio queries
+	runPopen("set-audio get", "audio.current");
+	runEnum("set-audio list", "audio.devices");
+	runPopen("set-audio get-profile", "audio.profile.current");
+	runEnum("set-audio list-profiles", "audio.profiles");
+
+	// Storage
+	runPopen("archr-config storage current", "storage.current");
+
+	// Video outputs
+	runEnum("archr-config lsoutputs", "video.outputs");
+
+	// WiFi channels
+	runEnum("/usr/bin/sh -lc \"/usr/bin/wifictl channels\"", "wifi.channels");
+
+	mCache.prefetched = true;
+	LOG(LogDebug) << "ApiSystem::prefetchMenuData - done";
+}
+
+// ---- End of cache ----
 
 std::vector<std::string> ApiSystem::executeEnumerationScript(const std::string command)
 {
