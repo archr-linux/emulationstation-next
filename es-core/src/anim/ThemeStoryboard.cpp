@@ -41,7 +41,7 @@ ThemeStoryboard::~ThemeStoryboard()
 
 #define RESOLVEVAR(x) variables.resolvePlaceholders(x)
 
-bool ThemeStoryboard::fromXmlNode(const pugi::xml_node& root, const std::map<std::string, ThemeData::ElementPropertyType>& typeMap, const std::string& relativePath, const ThemeVariables& variables)
+bool ThemeStoryboard::fromXmlNode(const pugi::xml_node& root, const std::unordered_map<std::string, ThemeData::ElementPropertyType>& typeMap, const std::string& relativePath, const ThemeVariables& variables)
 {	
 	if (strcmp(root.name(), "storyboard") != 0)
 		return false;

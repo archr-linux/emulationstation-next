@@ -420,7 +420,7 @@ public:
 	static bool parseCustomShader(const ThemeData::ThemeElement* elem, Renderer::ShaderInfo* pShader, const std::string& type = "shader");
 
 private:
-	static std::map< std::string, std::map<std::string, ElementPropertyType> > sElementMap;
+	static std::unordered_map< std::string, std::unordered_map<std::string, ElementPropertyType> > sElementMap;
 	static std::set<std::string> sSupportedItemTemplate;
 	static std::set<std::string> sSupportedFeatures;
 	static std::set<std::string> sSupportedViews;
@@ -442,7 +442,7 @@ private:
 	void parseCustomView(const pugi::xml_node& node, const pugi::xml_node& root);	
 	void parseViewElement(const pugi::xml_node& node);
 	void parseView(const pugi::xml_node& viewNode, ThemeView& view, bool overwriteElements = true);
-	void parseElement(const pugi::xml_node& elementNode, const std::map<std::string, ElementPropertyType>& typeMap, ThemeElement& element, ThemeView& view, bool overwrite = true);
+	void parseElement(const pugi::xml_node& elementNode, const std::unordered_map<std::string, ElementPropertyType>& typeMap, ThemeElement& element, ThemeView& view, bool overwrite = true);
 	bool parseRegion(const pugi::xml_node& node);
 	bool parseSubset(const pugi::xml_node& node);
 	bool isFirstSubset(const pugi::xml_node& node);

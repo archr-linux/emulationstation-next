@@ -1,8 +1,10 @@
 #pragma once
 
 #include "ThemeAnimation.h"
+#include "ThemeData.h"
 #include "ThemeVariables.h"
 #include <pugixml/src/pugixml.hpp>
+#include <unordered_map>
 #include <vector>
 
 class ThemeStoryboard
@@ -24,5 +26,5 @@ public:
 
 	std::vector<ThemeAnimation*> animations;
 
-	bool fromXmlNode(const pugi::xml_node& root, const std::map<std::string, ThemeData::ElementPropertyType>& typeMap, const std::string& relativePath, const ThemeVariables& variables);
+	bool fromXmlNode(const pugi::xml_node& root, const std::unordered_map<std::string, ThemeData::ElementPropertyType>& typeMap, const std::string& relativePath, const ThemeVariables& variables);
 };

@@ -42,7 +42,7 @@ std::map<std::string, std::string> ThemeData::sBaseClasses {
 	{ "webimage", "image" }
 };
 
-std::map<std::string, std::map<std::string, ThemeData::ElementPropertyType>> ThemeData::sElementMap {
+std::unordered_map<std::string, std::unordered_map<std::string, ThemeData::ElementPropertyType>> ThemeData::sElementMap {
 
 	{ "splash", {		
 		{ "backgroundColor", COLOR } } },
@@ -1937,7 +1937,7 @@ static std::set<std::string> _reservedNames =
 	"background",
 };*/
 
-void ThemeData::parseElement(const pugi::xml_node& root, const std::map<std::string, ElementPropertyType>& typeMap, ThemeElement& element, ThemeView& view, bool overwrite)
+void ThemeData::parseElement(const pugi::xml_node& root, const std::unordered_map<std::string, ElementPropertyType>& typeMap, ThemeElement& element, ThemeView& view, bool overwrite)
 {
 	// ThemeException error;
 	// error.setFiles(mPaths);
