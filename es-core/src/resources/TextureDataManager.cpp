@@ -64,7 +64,7 @@ void TextureDataManager::cancelAsync(const TextureResource* key)
 std::shared_ptr<TextureData> TextureDataManager::get(const TextureResource* key, TextureLoadMode enableLoading)
 {
 	std::unique_lock<std::recursive_mutex> lock(mMutex);
-	
+
 	// If it's in the cache then we want to remove it from it's current location and
 	// move it to the top
 	std::shared_ptr<TextureData> tex;
@@ -76,7 +76,21 @@ std::shared_ptr<TextureData> TextureDataManager::get(const TextureResource* key,
 		if (enableLoading == TextureLoadMode::DISABLED)
 			return tex;
 
-		if (mTextures.cbegin() != (*it).second)
+		// Skip LRU reorder if texture is already near the front (within first 8 entries).
+		// Active textures in a frame are typically the same set, so this avoids
+		// list erase + push_front + map update on every bind() call per frame.
+		bool nearFront = false;
+		auto check = mTextures.cbegin();
+		for (int i = 0; i < 8 && check != mTextures.cend(); ++i, ++check)
+		{
+			if (check == (*it).second)
+			{
+				nearFront = true;
+				break;
+			}
+		}
+
+		if (!nearFront)
 		{
 			// Remove the list entry
 			mTextures.erase((*it).second);
