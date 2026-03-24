@@ -56,5 +56,12 @@ using namespace glext;
 
 #endif
 
+// GL_CHECK_ERROR: In debug builds, checks glGetError() after each GL call.
+// In release builds, glGetError() is skipped since it can force GPU pipeline
+// synchronization on tile-based renderers (Mali, Panfrost), killing performance.
+#ifdef NDEBUG
+#define GL_CHECK_ERROR(Function) (Function)
+#else
 #define GL_CHECK_ERROR(Function) (Function, _GLCheckError(#Function))
+#endif
 bool _GLCheckError(const char* _funcName);
