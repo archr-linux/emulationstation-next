@@ -609,9 +609,19 @@ void SystemView::update(int deltaTime)
 	for (auto sb : mStaticBackgrounds)
 		sb->update(deltaTime);
 
-	for (auto& entry : mEntries)
-		for (auto extra : entry.backgroundExtras)
-			extra->update(deltaTime);
+	// Only update extras for the current system and its immediate neighbors
+	// (the rest are off-screen and don't need per-frame updates)
+	if (!mEntries.empty())
+	{
+		int cur = mCarousel.getCursorIndex();
+		int count = (int)mEntries.size();
+		for (int offset = -1; offset <= 1; offset++)
+		{
+			int idx = (cur + offset + count) % count;
+			for (auto extra : mEntries[idx].backgroundExtras)
+				extra->update(deltaTime);
+		}
+	}
 
 	GuiComponent::update(deltaTime);
 
@@ -1162,10 +1172,7 @@ void SystemView::renderExtras(const Transform4x4f& trans, float lower, float upp
 
 	Renderer::pushClipRect(Vector2i::Zero(), Vector2i((int)mSize.x(), (int)mSize.y()));
 
-	std::unordered_set<std::string> allPaths;
-	std::unordered_set<std::string> paths;
-	std::unordered_set<std::string> allValues;
-	std::unordered_set<std::string> values;
+	std::unordered_set<std::string> allPaths, paths, allValues, values;
 
 	if (mExtrasFadeOpacity && mExtrasFadeOldCursor >= 0 && mExtrasFadeOldCursor < mEntries.size() && mExtrasFadeOldCursor != mCursor)
 	{

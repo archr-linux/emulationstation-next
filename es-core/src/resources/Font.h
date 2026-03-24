@@ -185,11 +185,15 @@ protected:
 	bool renderingGlow;
 
 	Renderer::ShaderInfo customShader;
+	unsigned int mLastColor;
+	unsigned int mLastExtraColor;
 
 public:
 	TextCache()
 	{
 		renderingGlow = false;
+		mLastColor = 0;
+		mLastExtraColor = 0;
 	}
 
 	struct CacheMetrics

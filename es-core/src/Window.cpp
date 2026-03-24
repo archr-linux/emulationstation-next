@@ -1238,18 +1238,18 @@ void Window::postToUiThread(const std::function<void()>& func, void* data)
 
 void Window::processPostedFunctions()
 {
+	// Fast path: skip lock entirely when no functions are queued
+	if (mFunctions.empty())
+		return;
+
 	std::vector<PostedFunction> functions;
 
-	mNotificationMessagesLock.lock();
+	{
+		std::lock_guard<std::mutex> lock(mNotificationMessagesLock);
+		functions.swap(mFunctions);
+	}
 
-	for (auto func : mFunctions)
-		functions.push_back(func);
-
-	mFunctions.clear();
-
-	mNotificationMessagesLock.unlock();
-
-	for (auto func : functions)
+	for (auto& func : functions)
 		TRYCATCH("processPostedFunction", func.func())
 }
 

@@ -91,6 +91,7 @@ protected:
 	virtual void onTextChanged();
 
 	std::string mText;
+	std::string mUpperText; // cached uppercase version, updated in onTextChanged()
 	std::shared_ptr<Font> mFont;
 	std::string mSourceText;
 

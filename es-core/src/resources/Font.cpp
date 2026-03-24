@@ -1095,6 +1095,12 @@ TextCache* Font::buildTextCache(const std::string& text, float offsetX, float of
 
 void TextCache::setColors(unsigned int color, unsigned int extraColor)
 {
+	if (color == mLastColor && extraColor == mLastExtraColor)
+		return;
+
+	mLastColor = color;
+	mLastExtraColor = extraColor;
+
 	const unsigned int convertedColor = Renderer::convertColor(color);
 	const unsigned int convertedExtraColor = Renderer::convertColor(extraColor);
 
@@ -1121,12 +1127,18 @@ void TextCache::setColors(unsigned int color, unsigned int extraColor)
 
 void TextCache::setColor(unsigned int color)
 {
+	if (color == mLastColor && mLastExtraColor == 0)
+		return;
+
+	mLastColor = color;
+	mLastExtraColor = 0;
+
 	const unsigned int convertedColor = Renderer::convertColor(color);
 
 	for (auto it = vertexLists.begin(); it != vertexLists.end(); it++)
 		for (auto it2 = it->verts.begin(); it2 != it->verts.end(); it2++)
 				it2->col = convertedColor;
-	
+
 	if (renderingGlow)
 		return;
 

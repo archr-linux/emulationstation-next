@@ -321,10 +321,11 @@ void TextComponent::onTextChanged()
 {
 	mTextLength = -1;
 	mTextCache = nullptr;
+	mUpperText = mUppercase ? Utils::String::toUpper(mText) : mText;
 
 	if (mAutoCalcExtent.x())
 	{
-		auto text = mUppercase ? Utils::String::toUpper(mText) : mText;
+		std::string text = mUpperText;
 		if (mMultiline == MultiLineType::SINGLELINE)
 		{
 			size_t newline = text.find('\n');
@@ -340,7 +341,7 @@ void TextComponent::onTextChanged()
 		if (mMultiline == MultiLineType::SINGLELINE)
 			mSize[1] = mFont->getHeight() + mPadding.y() + mPadding.w();
 		else
-			mSize[1] = mFont->sizeWrappedText(mUppercase ? Utils::String::toUpper(mText) : mText, getSize().x(), mLineSpacing).y() + mPadding.y() + mPadding.w();
+			mSize[1] = mFont->sizeWrappedText(mUpperText, getSize().x(), mLineSpacing).y() + mPadding.y() + mPadding.w();
 	}
 }
 
@@ -355,7 +356,7 @@ void TextComponent::buildTextCache()
 	int sx = mSize.x() - mPadding.x() - mPadding.z();
 	int sy = mSize.y() - mPadding.y() - mPadding.w();
 
-	std::string text = mUppercase ? Utils::String::toUpper(mText) : mText;
+	std::string text = mUpperText;
 
 	std::shared_ptr<Font> f = mFont;
 	
@@ -444,12 +445,10 @@ void TextComponent::update(int deltaTime)
 		mMarqueeOffset = 0;
 		mMarqueeOffset2 = 0;
 
-		std::string text = mUppercase ? Utils::String::toUpper(mText) : mText;
-
 		// if we're not scrolling and this object's text goes outside our size, marquee it!
 
 		if (mTextLength < 0)
-			mTextLength = mFont->sizeText(text).x();
+			mTextLength = mFont->sizeText(mUpperText).x();
 
 		const float textLength = mTextLength;
 		const float limit = mSize.x() - mPadding.x() - mPadding.z();
@@ -482,12 +481,10 @@ void TextComponent::update(int deltaTime)
 	}
 	else if(mAutoScroll == AutoScrollType::VERTICAL && mSize.y() > 0)
 	{
-		std::string text = mUppercase ? Utils::String::toUpper(mText) : mText;
-
 		// if we're not scrolling and this object's text goes outside our size, marquee it!
 
 		if (mTextLength < 0)
-			mTextLength = mFont->sizeWrappedText(mUppercase ? Utils::String::toUpper(mText) : mText, getSize().x(), mLineSpacing).y();
+			mTextLength = mFont->sizeWrappedText(mUpperText, getSize().x(), mLineSpacing).y();
 
 		int textLength = mTextLength;
 		int limit = mSize.y() - mPadding.y() - mPadding.y();

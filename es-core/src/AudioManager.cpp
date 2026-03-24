@@ -201,7 +201,7 @@ void AudioManager::addLastPlayed(const std::string& newSong, int totalMusic)
 // Check if current song exists in last played history
 bool AudioManager::songWasPlayedRecently(const std::string& song)
 {
-	for (std::string i : mLastPlayed)
+	for (const std::string& i : mLastPlayed)
 	{
 		if (song == i)
 		{
@@ -324,15 +324,18 @@ void AudioManager::stopMusic(bool fadeOut)
 	if (mCurrentMusic == NULL)
 		return;
 
-	Mix_HookMusicFinished(nullptr);
-
 	if (fadeOut)
 	{
-		// Fade-out is nicer !
-		while (!Mix_FadeOutMusic(500) && Mix_PlayingMusic())
-			SDL_Delay(100);
+		// Non-blocking fade: start fade and let SDL_mixer handle cleanup via callback.
+		// Mix_FadeOutMusic returns non-zero on success.
+		if (Mix_FadeOutMusic(500))
+		{
+			mCurrentMusicPath = "";
+			return;
+		}
 	}
 
+	Mix_HookMusicFinished(nullptr);
 	Mix_HaltMusic();
 	Mix_FreeMusic(mCurrentMusic);
 	mCurrentMusicPath = "";
