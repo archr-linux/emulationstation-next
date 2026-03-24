@@ -556,8 +556,7 @@ msgid "AUTOMATICALLY CREATE LOBBY"
 msgstr "CRIAR LOBBY AUTOMATICAMENTE"
 
 msgid "Automatically creates a Netplay lobby when starting a game."
-msgstr ""
-"Automaticamente cria um lobby Netplay quando estiver começando um jogo."
+msgstr "Cria automaticamente um lobby Netplay ao iniciar um jogo."
 
 msgid "SHOW RELAY SERVER GAMES ONLY"
 msgstr "MOSTRAR APENAS JOGOS DO SERVIDOR"
@@ -653,24 +652,19 @@ msgid "HARDCORE MODE"
 msgstr "MODO RESTRITO"
 
 msgid "Disable loading states, rewind and cheats for more points."
-msgstr ""
-"Desative os estados de carregamento, retroceda e use trapaças para ganhar "
-"mais pontos."
+msgstr "Desativa save states, rebobinar e trapaças para mais pontos."
 
 msgid "LEADERBOARDS"
 msgstr "PLACAR"
 
 msgid "Compete in high-score and best time leaderboards (requires hardcore)."
-msgstr ""
-"Competir em rankings de maior pontuação e melhor tempo (requer modo "
-"hardcore)."
+msgstr "Compita em placar de recordes e melhores tempos (requer hardcore)."
 
 msgid "VERBOSE MODE"
 msgstr "MODO DETALHADO"
 
 msgid "Show achievement progression on game launch and other notifications."
-msgstr ""
-"Mostra a progressão das conquistas e outras notificações ao iniciar o jogo."
+msgstr "Mostrar progresso de conquistas ao iniciar jogo e outras notificações."
 
 msgid "RICH PRESENCE"
 msgstr "Presença Rica"
@@ -685,9 +679,7 @@ msgid "AUTOMATIC SCREENSHOT"
 msgstr "CAPTURA DE TELA AUTOMÁTICO"
 
 msgid "Automatically take a screenshot when an achievement is earned."
-msgstr ""
-"Captura uma imagem da tela automaticamente quando uma conquista retrô é "
-"conquistada."
+msgstr "Tirar screenshot automaticamente ao ganhar uma conquista."
 
 msgid "CHALLENGE INDICATORS"
 msgstr "INDICADORES DE DESAFIOS"
@@ -718,8 +710,7 @@ msgid "SHOW RETROACHIEVEMENTS ENTRY IN MAIN MENU"
 msgstr "EXIBIR CONQUISTAS ALCANÇADAS NO MENU PRINCIPAL"
 
 msgid "View your RetroAchievement stats right from the main menu!"
-msgstr ""
-"Veja suas estatísticas do RetroAchievement diretamente no menu principal!"
+msgstr "Veja suas estatísticas RetroAchievement direto do menu principal!"
 
 msgid "UNABLE TO ACTIVATE RETROACHIEVEMENTS:"
 msgstr "INCAPAZ DE ATIVAR CONQUISTAS:"
@@ -1387,8 +1378,7 @@ msgid "CREATE A SUPPORT FILE"
 msgstr "CRIAR UM ARQUIVO DE SUPORTE"
 
 msgid "CREATE A SUPPORT FILE? THIS INCLUDES ALL DATA IN YOUR SYSTEM FOLDER."
-msgstr ""
-"CRIAR UM ARQUIVO DE SUPORTE? ISTO INCLUI TODOS OS DADOS DA PASTA DO SISTEMA."
+msgstr "CRIAR ARQUIVO DE SUPORTE? ISSO INCLUI TODOS OS DADOS DA PASTA DO SISTEMA."
 
 msgid "SUPPORT FILE CREATED IN SAVES FOLDER"
 msgstr "ARQUIVO DE SUPORTE CRIADO NA PASTA DE ESTADOS DE SALVAMENTO"
@@ -1403,9 +1393,7 @@ msgid "CLEAN GAMELISTS & REMOVE UNUSED MEDIA"
 msgstr "LIMPAR LISTA DE JOGOS AUSENTES & REMOVER MÍDIAS NÃO UTILIZADAS"
 
 msgid "Remove unused entries, and clean references to missing medias."
-msgstr ""
-"Remove entradas ausentes da lista de jogos e apaga arquivos de mídia não "
-"referenciados."
+msgstr "Remover entradas não usadas e limpar referências a mídias ausentes."
 
 msgid "Cleaning"
 msgstr "Apagando"
@@ -1414,17 +1402,13 @@ msgid "RESET GAMELISTS USAGE DATA"
 msgstr "REDEFINIR DADOS DE USO DAS LISTAS DE JOGOS"
 
 msgid "Reset values of GameTime, PlayCount and LastPlayed metadata."
-msgstr ""
-"Redefine os valores dos metadados Tempo de Jogo, Vezes Jogado e Jogado por "
-"Último."
+msgstr "Redefinir valores de tempo de jogo, contagem e última vez jogado."
 
 msgid "RESET FILE EXTENSIONS"
 msgstr "REESTABELECER EXTENSÕES DE ARQUIVO"
 
 msgid "Reset customized file extensions filters to default."
-msgstr ""
-"Reestabelecer os filtros de extensões de arquivos personalizados para o "
-"padrão."
+msgstr "Redefinir filtros de extensão de arquivos para o padrão."
 
 msgid "REDETECT ALL GAMES' LANG/REGION"
 msgstr "REDESCOBRIR IDIOMA/REGIÃO DE TODOS OS JOGOS"
@@ -1481,9 +1465,7 @@ msgid "PARSE GAMELISTS ONLY"
 msgstr "ANALISAR APENAS A LISTA DE JOGOS"
 
 msgid "Debug tool: Don't check if the ROMs actually exist. Can cause problems!"
-msgstr ""
-"Ferramenta de depuração: Não verifique se os arquivos dos JOGOS realmente "
-"existem. Pode causar problemas!"
+msgstr "Ferramenta de debug: não verificar se as ROMs existem. Pode causar problemas!"
 
 msgid "SEARCH FOR LOCAL ART"
 msgstr "PESQUISAR ARTE LOCAL"
@@ -1670,9 +1652,7 @@ msgid "USER INTERFACE MODE"
 msgstr "MODO DE INTERFACE DO USUÁRIO"
 
 msgid "Lock down certain config menus for use with guest users/kids."
-msgstr ""
-"Bloqueia determinados menus de configuração para uso com usuários convidados/"
-"crianças."
+msgstr "Bloquear certos menus de configuração para uso com convidados/crianças."
 
 msgid ""
 "You are changing the user interface to a restricted mode:\n"
@@ -1888,9 +1868,7 @@ msgid "AUTO SAVE/LOAD"
 msgstr "SALVAR/CARREGAR AUTOMÁTICO"
 
 msgid "Load latest savestate on game launch and savestate when exiting game."
-msgstr ""
-"Carrega o estado de salvamento mais recente ao iniciar o jogo e salva o "
-"estado ao sair do jogo."
+msgstr "Carregar último save state ao iniciar e salvar ao sair do jogo."
 
 msgid "INCREMENTAL SAVESTATES"
 msgstr "TIPO DE INCREMENTO"
@@ -1942,8 +1920,7 @@ msgid "SMOOTH GAMES (BILINEAR FILTERING)"
 msgstr "JOGOS SUAVES (FILTRO BILINEAR)"
 
 msgid "Store past states to rewind to in realtime, if the core supports it."
-msgstr ""
-"Armazena estados passados para rebobinar em tempo real, se o núcleo suportar."
+msgstr "Armazenar estados passados para rebobinar em tempo real, se o core suportar."
 
 msgid "INTEGER SCALING (PIXEL PERFECT)"
 msgstr "ESCALA INTEIRA (PIXEL PERFEITO)"
@@ -2021,8 +1998,7 @@ msgid "SCRAPER IS RUNNING. DO YOU WANT TO STOP IT?"
 msgstr "PROCURA POR MÍDIAS DE JOGO EM EXECUÇÃO. DESEJA INTERROMPÊ-LA ?"
 
 msgid "GAME HASHING IS RUNNING. DO YOU WANT TO STOP IT?"
-msgstr ""
-"IDENTIFICAÇÃO NUMÉRICA DO JOGO ESTÁ EM EXECUÇÃO. DESEJA INTERROMPÊ-LA ?"
+msgstr "HASH DE JOGOS EM ANDAMENTO. DESEJA PARAR?"
 
 msgid "REALLY UPDATE GAMELISTS?"
 msgstr "DESEJA ATUALIZAR A LISTA DE JOGOS ?"
@@ -2331,9 +2307,7 @@ msgid "AUTO SAVE/LOAD ON GAME LAUNCH"
 msgstr "CARREGAR/SALVAR AO INICIAR JOGO"
 
 msgid "Load latest save state on game launch and save state when exiting game."
-msgstr ""
-"Carrega o estado de salvamento mais recente ao iniciar o jogo e salva o "
-"estado ao sair do jogo."
+msgstr "Carregar último save state ao iniciar e salvar ao sair do jogo."
 
 msgid "SHOW CONTROLLER OVERLAYS"
 msgstr "MOSTRAR INDICADORES DO CONTROLE"
@@ -2973,9 +2947,7 @@ msgid "DECLARE A NEW GLOBAL HOTKEY"
 msgstr "DECLARAR UMA NOVA TECLA DE ATALHO GLOBAL"
 
 msgid "YOU'VE 4 SECONDS TO PRESS EXACTLY 2 TIMES THE GLOBAL HOTKEY"
-msgstr ""
-"VOCÊ TEM 4 SEGUNDOS PARA PRESSIONAR EXATAMENTE 2 VEZES A TECLA DE ATALHO "
-"GLOBAL"
+msgstr "VOCÊ TEM 4 SEGUNDOS PARA PRESSIONAR EXATAMENTE 2 VEZES O ATALHO GLOBAL"
 
 msgid "NO GLOBAL HOTKEY DETECTED"
 msgstr "NENHUMA TECLA DE ATALHO GLOBAL DETECTADA"
@@ -3993,3 +3965,27 @@ msgstr "NÃO, IGNORAR"
 
 #~ msgid "RESTRICT HOTKEYS TO EXIT"
 #~ msgstr "RESTRINGIR ATALHOS PARA SAIR"
+
+msgid "AN ERROR OCCURRED: %s"
+msgstr "OCORREU UM ERRO: %s"
+
+msgid "AN ERROR OCCURRED: check the system/logs directory"
+msgstr "OCORREU UM ERRO: verifique o diretório system/logs"
+
+msgid "FAILED: %s"
+msgstr "FALHOU: %s"
+
+msgid "EUROPE"
+msgstr "EUROPA"
+
+msgid "USA"
+msgstr "EUA"
+
+msgid "JAPAN"
+msgstr "JAPÃO"
+
+msgid "WORLD"
+msgstr "MUNDO"
+
+msgid "NEVER"
+msgstr "NUNCA"

@@ -3885,3 +3885,27 @@ msgstr ""
 
 msgid "NO, IGNORE"
 msgstr ""
+
+msgid "AN ERROR OCCURRED: %s"
+msgstr ""
+
+msgid "AN ERROR OCCURRED: check the system/logs directory"
+msgstr ""
+
+msgid "FAILED: %s"
+msgstr ""
+
+msgid "EUROPE"
+msgstr ""
+
+msgid "USA"
+msgstr ""
+
+msgid "JAPAN"
+msgstr ""
+
+msgid "WORLD"
+msgstr ""
+
+msgid "NEVER"
+msgstr ""
