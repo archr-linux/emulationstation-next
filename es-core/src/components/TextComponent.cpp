@@ -187,10 +187,15 @@ void TextComponent::render(const Transform4x4f& parentTrans)
 		{
 			if (mAutoScroll == AutoScrollType::VERTICAL)
 			{
+				// Use stack buffer for numeric conversions (avoids heap allocation per frame)
+				char offsetBuf[32], heightBuf[32];
+				snprintf(offsetBuf, sizeof(offsetBuf), "%g", (float)mMarqueeOffset);
+				snprintf(heightBuf, sizeof(heightBuf), "%g", rect.h);
+
 				Renderer::ShaderInfo shader;
 				shader.path = ":/shaders/vscrolleffect.glsl";
-				shader.parameters["s_offset"] = std::to_string((float)mMarqueeOffset);
-				shader.parameters["s_height"] = std::to_string(rect.h);
+				shader.parameters["s_offset"] = offsetBuf;
+				shader.parameters["s_height"] = heightBuf;
 				shader.parameters["s_forcetop"] = "4";
 				shader.parameters["s_forcebottom"] = "4";
 				mTextCache->setCustomShader(&shader);

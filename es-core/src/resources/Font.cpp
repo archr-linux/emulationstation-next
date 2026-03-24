@@ -679,7 +679,7 @@ std::string tryFastBidi(const std::string& text)
     return ret;
 }
 
-Vector2f Font::sizeText(std::string text, float lineSpacing)
+Vector2f Font::sizeText(const std::string& text, float lineSpacing)
 {
 	float lineWidth = 0.0f;
 	float highestWidth = 0.0f;
@@ -795,7 +795,7 @@ Vector2f Font::sizeWrappedText(std::string text, float xLen, float lineSpacing)
 	return sizeText(text, lineSpacing);
 }
 
-Vector2f Font::getWrappedTextCursorOffset(std::string text, float xLen, size_t stop, float lineSpacing)
+Vector2f Font::getWrappedTextCursorOffset(const std::string& text, float xLen, size_t stop, float lineSpacing)
 {
 	std::string wrappedText = wrapText(text, xLen);
 

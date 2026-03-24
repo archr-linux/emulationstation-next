@@ -746,14 +746,19 @@ namespace Utils
 
 		std::string GetShOutput(const std::string& mStr)
 		{
-			std::string result, file;
-			FILE* pipe{popen(mStr.c_str(), "r")};
-			char buffer[256];
+			std::string result;
+			FILE* pipe = popen(mStr.c_str(), "r");
+			if (pipe == nullptr)
+				return result;
 
-			while(fgets(buffer, sizeof(buffer), pipe) != NULL)
+			char buffer[256];
+			while (fgets(buffer, sizeof(buffer), pipe) != NULL)
 			{
-				file = buffer;
-				result += file.substr(0, file.size() - 1);
+				// Strip trailing newline directly, avoid temporary string copies
+				size_t len = strlen(buffer);
+				if (len > 0 && buffer[len - 1] == '\n')
+					--len;
+				result.append(buffer, len);
 			}
 
 			pclose(pipe);
