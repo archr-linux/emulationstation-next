@@ -515,9 +515,15 @@ void TextListComponent<T>::update(int deltaTime)
 
 	mScrollbar.update(deltaTime);
 
-	if (!mItemTemplate.type.empty())
+	if (!mItemTemplate.type.empty() && !mEntries.empty())
 	{
-		for (unsigned int i = 0; i < mEntries.size(); i++)
+		// Only update visible item templates (off-screen ones don't need per-frame updates)
+		float entrySize = getRowHeight();
+		int startEntry = (entrySize > 0) ? (int)(mCameraOffset / entrySize) : 0;
+		int screenCount = mLineCount > 0 ? mLineCount : (entrySize > 0 ? (int)(mSize.y() / entrySize) : 0);
+		int lastEntry = Math::min((int)mEntries.size(), startEntry + screenCount + 1);
+
+		for (int i = Math::max(0, startEntry); i < lastEntry; i++)
 		{
 			auto& entry = mEntries.at(i);
 			if (entry.data.itemTemplate && entry.data.itemTemplate->isShowing())

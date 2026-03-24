@@ -457,7 +457,13 @@ void TextComponent::update(int deltaTime)
 		{
 			// loop
 			// pixels per second ( based on nes-mini font at 1920x1080 to produce a speed of 200 )
-			const float speed = mFont->sizeText("ABCDEFGHIJKLMNOPQRSTUVWXYZ").x() * 0.247f;
+			static float cachedAlphabetWidth = 0.0f;
+			static std::shared_ptr<Font> cachedAlphabetFont;
+			if (cachedAlphabetFont != mFont) {
+				cachedAlphabetWidth = mFont->sizeText("ABCDEFGHIJKLMNOPQRSTUVWXYZ").x();
+				cachedAlphabetFont = mFont;
+			}
+			const float speed = cachedAlphabetWidth * 0.247f;
 			const float delay = 1000;
 			const float scrollLength = textLength;
 			const float returnLength = speed * 1.5f;

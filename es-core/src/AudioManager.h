@@ -9,6 +9,7 @@
 #include <string> 
 #include <iostream> 
 #include <deque>
+#include <unordered_set>
 #include <math.h>
 
 class Sound;
@@ -31,7 +32,8 @@ private:
 	std::string mCurrentSong;			// Song name displayed in pop-ups
 	std::string mCurrentThemeMusicDirectory;
 	std::string mCurrentMusicPath;                  //  Stores the full path of the currently playing song
-	std::deque<std::string> mLastPlayed;            // Stores recently played songs
+	std::deque<std::string> mLastPlayed;            // Stores recently played songs (ordered)
+	std::unordered_set<std::string> mLastPlayedSet; // O(1) lookup for songWasPlayedRecently
 
 	bool		mInitialized;
 	std::string	mPlayingSystemThemeSong;

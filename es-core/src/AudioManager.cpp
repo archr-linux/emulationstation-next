@@ -184,16 +184,15 @@ void AudioManager::addLastPlayed(const std::string& newSong, int totalMusic)
 {
 	int historySize = std::floor(totalMusic * LAST_PLAYED_SIZE);
 	if (historySize < 1)
-	{
-		// Number of songs is too small to bother with
 		return;
-	}
-	
-	while (mLastPlayed.size() > historySize) {
+
+	while ((int)mLastPlayed.size() > historySize) {
+		mLastPlayedSet.erase(mLastPlayed.back());
 		mLastPlayed.pop_back();
 	}
 	mLastPlayed.push_front(newSong);
-	
+	mLastPlayedSet.insert(newSong);
+
 	LOG(LogDebug) << "Adding " << newSong << " to last played, " << mLastPlayed.size() << " in history";
 }
 
@@ -201,14 +200,7 @@ void AudioManager::addLastPlayed(const std::string& newSong, int totalMusic)
 // Check if current song exists in last played history
 bool AudioManager::songWasPlayedRecently(const std::string& song)
 {
-	for (const std::string& i : mLastPlayed)
-	{
-		if (song == i)
-		{
-			return true;
-		}
-	}
-	return false;
+	return mLastPlayedSet.find(song) != mLastPlayedSet.end();
 }
 
 void AudioManager::playRandomMusic(bool continueIfPlaying)

@@ -268,14 +268,22 @@ void CarouselComponent::onCursorChanged(const CursorState& state)
 		}
 	}
 
-	for (int i = 0; i < mEntries.size(); i++)
+	// Only trigger "scroll" storyboard on nearby logos (visible range + buffer)
+	int count = (int)mEntries.size();
+	if (count > 0)
 	{
-		if ((cursorHasStoryboard && i == mCursor) || (oldCursorHasStoryboard && i == oldCursor))
-			continue;
+		int range = std::min(count, 5); // logos within +/- 5 of cursor
+		for (int offset = -range; offset <= range; offset++)
+		{
+			int i = ((mCursor + offset) % count + count) % count;
 
-		auto logo = mEntries.at(i).data.logo;
-		if (logo && logo->selectStoryboard("scroll"))
-			logo->startStoryboard();
+			if ((cursorHasStoryboard && i == mCursor) || (oldCursorHasStoryboard && i == oldCursor))
+				continue;
+
+			auto logo = mEntries.at(i).data.logo;
+			if (logo && logo->selectStoryboard("scroll"))
+				logo->startStoryboard();
+		}
 	}
 
 	Animation* anim;
