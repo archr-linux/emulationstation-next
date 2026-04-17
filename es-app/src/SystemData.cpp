@@ -110,14 +110,9 @@ SystemData::SystemData(const SystemMetadata& meta, SystemEnvironmentData* envDat
 		}
 
 		if (!Settings::IgnoreGamelist())
-		{
-			if (!mHidden && Settings::PackGamelists())
-				packGamelist(this);
-
 			parseGamelist(this, fileMap);
-		}
-		
-		if (Settings::RemoveMultiDiskContent() || Settings::BuildMultiDiskContentCache())
+
+		if (Settings::RemoveMultiDiskContent())
 			removeMultiDiskContent(fileMap);
 	}
 	else
