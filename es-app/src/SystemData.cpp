@@ -110,9 +110,14 @@ SystemData::SystemData(const SystemMetadata& meta, SystemEnvironmentData* envDat
 		}
 
 		if (!Settings::IgnoreGamelist())
-			parseGamelist(this, fileMap);		
+		{
+			if (!mHidden && Settings::PackGamelists())
+				packGamelist(this);
+
+			parseGamelist(this, fileMap);
+		}
 		
-		if (Settings::RemoveMultiDiskContent())
+		if (Settings::RemoveMultiDiskContent() || Settings::BuildMultiDiskContentCache())
 			removeMultiDiskContent(fileMap);
 	}
 	else
@@ -820,8 +825,16 @@ bool SystemData::loadConfig(Window* window)
 	}
 
 	pugi::xml_document doc;
-	pugi::xml_parse_result res = doc.load_file(WINSTRINGW(path).c_str());
 
+	auto buffer = Utils::FileSystem::readAllBytes(path);
+	if (!buffer.size())
+	{
+		LOG(LogError) << "Could not open es_systems.cfg file!";
+		return false;
+	}
+
+	//	pugi::xml_parse_result res = doc.load_file(WINSTRINGW(path).c_str());
+	pugi::xml_parse_result res = doc.load_buffer_inplace(buffer.data(), buffer.size(), pugi::parse_default);
 	if (!res)
 	{
 		LOG(LogError) << "Could not parse es_systems.cfg file!";
