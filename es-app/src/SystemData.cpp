@@ -197,7 +197,7 @@ void SystemData::removeMultiDiskContent(std::unordered_map<std::string, FileData
 	for (const auto& file : files)
 	{
 		auto it = fileMap.find(file);
-		if (it != fileMap.cend())
+		if (it != fileMap.cend() && it->second->getType() == GAME)
 		{
 			delete it->second;
 			fileMap.erase(it);
