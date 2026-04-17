@@ -1484,6 +1484,7 @@ void Window::processStorageRequest(std::string line)
 		std::string deviceModel = parts[2];
 		std::string deviceSize  = parts[3];
 		std::string mountPoint  = parts[4];
+		std::string uniqueId    = (parts.size() > 5 && !parts[5].empty()) ? parts[5] : "";
 
 		std::string message = _("GAME DRIVE DETECTED") + "\n\n" +
 							  _("DEVICE") + ": " + deviceName + "\n" +
@@ -1493,8 +1494,7 @@ void Window::processStorageRequest(std::string line)
 							  _("Merge games from this drive partition now?") + "\n" + 
 							  _("(This will also apply on future boots)");
 
-		auto* msg = new GuiMsgBox(this, message,
-			_("YES"), [this, mountPoint, processNext] {
+		auto mergeLambda = [this, mountPoint, processNext] {
 				this->displayNotificationMessage(_("Merge requested... Please wait."));
 				needReload = true;
 
@@ -1508,10 +1508,31 @@ void Window::processStorageRequest(std::string line)
 						}
 					});
 				}).detach();
-			}, 
-			_("NO"), [processNext] { processNext(); }
-		);
-		pushGui(msg);
+		};
+
+		if (!uniqueId.empty())
+		{
+			auto* msg = new GuiMsgBox(this, message,
+				_("NO, IGNORE THIS TIME"), [processNext] { processNext(); },
+				_("NO, IGNORE FOREVER"), [this, uniqueId, processNext] {
+					this->displayNotificationMessage(_("Adding drive to ignore list..."));
+					std::thread([uniqueId, processNext, this]() {
+						ApiSystem::getInstance()->ignoreDevicePermanently(uniqueId);
+						this->postToUiThread([processNext] { processNext(); });
+					}).detach();
+				},
+				_("YES, MERGE DRIVE"), mergeLambda
+			);
+			pushGui(msg);
+		}
+		else
+		{
+			auto* msg = new GuiMsgBox(this, message,
+				_("YES"), mergeLambda, 
+				_("NO"), [processNext] { processNext(); }
+			);
+			pushGui(msg);
+		}
 	}
 	else if (type == "REQUEST_FORMAT" && parts.size() >= 2)
 	{
