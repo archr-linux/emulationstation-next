@@ -282,7 +282,10 @@ void TextureLoader::threadProc()
 				
 				lock.unlock();
 				std::this_thread::yield();
-				
+
+				// Free VRAM before each async load to prevent transient overcommit
+				mManager->cleanupVRAM(textureData);
+
 				try
 				{
 					textureData->load(true);
