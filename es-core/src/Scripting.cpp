@@ -160,6 +160,11 @@ namespace Scripting
             Paths::getUserEmulationStationPath() + "/scripts/" + eventName,
             Paths::getEmulationStationPath() + "/scripts/" + eventName,
 #ifndef WIN32
+            // /var/run is a symlink to /run on systemd-based distros;
+            // accept either so ArchR's tmpfiles.d (/run/emulationstation)
+            // and the legacy /var/run/emulationstation are both picked
+            // up without forcing one over the other.
+            "/run/emulationstation/scripts/" + eventName,
             "/var/run/emulationstation/scripts/" + eventName
 #endif
         };
@@ -184,6 +189,7 @@ namespace Scripting
             Paths::getUserEmulationStationPath() + "/scripts",
             Paths::getEmulationStationPath() + "/scripts",
 #ifndef WIN32
+            "/run/emulationstation/scripts",
             "/var/run/emulationstation/scripts"
 #endif
         };

@@ -1,6 +1,9 @@
 #include "Platform.h"
 
 #include <SDL_events.h>
+#include <algorithm>
+#include <cctype>
+#include <cstdlib>
 
 #if WIN32
 #include <codecvt>
@@ -585,6 +588,18 @@ namespace Utils
 #if WIN32
 			return "windows";
 #else
+			// ArchR ships the device id (RK3326, RK3566, ...) via the
+			// HW_DEVICE env exported by /etc/profile.d/999-export. Use
+			// it as the canonical source; fall back to the legacy
+			// Batocera path so non-ArchR builds keep working.
+			const char* hw = std::getenv("HW_DEVICE");
+			if (hw && *hw)
+			{
+				std::string s(hw);
+				std::transform(s.begin(), s.end(), s.begin(),
+				               [](unsigned char c){ return std::tolower(c); });
+				return s;
+			}
 			std::string arch = Utils::FileSystem::readAllText("/usr/share/batocera/batocera.arch");
 			if (!arch.empty())
 				return arch;
