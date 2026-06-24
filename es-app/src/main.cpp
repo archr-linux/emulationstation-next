@@ -328,6 +328,11 @@ int setLocale(char * argv1)
 	std::string localeResult;
 	if (Utils::FileSystem::exists("./locale/lang")) // for local builds
 		localeResult = EsLocale::init("", "./locale/lang");
+	// ArchR ships the gettext .mo bundles under /usr/config/locale (the
+	// userconfig rsync target), not the standard /usr/share/locale —
+	// look there first so emulationstation2.mo is actually found.
+	else if (Utils::FileSystem::exists("/usr/config/locale"))
+		localeResult = EsLocale::init("", "/usr/config/locale");
 	else
 		localeResult = EsLocale::init("", "/usr/share/locale");
 
