@@ -58,6 +58,7 @@
 #include "components/MultiLineMenuEntry.h"
 #include "components/BatteryIndicatorComponent.h"
 #include "GuiLoading.h"
+#include <thread>
 #include "guis/GuiBios.h"
 #include "guis/GuiKeyMappingEditor.h"
 #include "Gamelist.h"
@@ -816,7 +817,9 @@ void GuiMenu::openDeveloperSettings()
 		if (Settings::getInstance()->getBool("Overscan") != overscan_enabled->getState()) 
 		{
 			Settings::getInstance()->setBool("Overscan", overscan_enabled->getState());
-			ApiSystem::getInstance()->setOverscan(overscan_enabled->getState());
+			// runs a shell script; keep the settings-save path off the UI thread
+			bool overscan = overscan_enabled->getState();
+			std::thread([overscan] { ApiSystem::getInstance()->setOverscan(overscan); }).detach();
 		}
 	});
 #endif
@@ -1198,7 +1201,7 @@ void GuiMenu::openDeveloperSettings()
 			SystemConf::getInstance()->setBool("controllers.ps3.enabled", ps3Enabled);
 			SystemConf::getInstance()->saveSystemConf();
 			if(SystemConf::getInstance()->getBool("controllers.bluetooth.enabled"))
-				ApiSystem::getInstance()->enableBluetooth();
+				std::thread([] { ApiSystem::getInstance()->enableBluetooth(); }).detach();
 		}
 	});
 #endif
@@ -2269,7 +2272,9 @@ void GuiMenu::openSystemSettings()
 				if (optionsAudio->changed())
 				{
 					SystemConf::getInstance()->set("audio.device", optionsAudio->getSelected());
-					ApiSystem::getInstance()->setAudioOutputDevice(optionsAudio->getSelected());
+					// set-audio can take seconds; do not block the save path
+					std::string audioDevice = optionsAudio->getSelected();
+					std::thread([audioDevice] { ApiSystem::getInstance()->setAudioOutputDevice(audioDevice); }).detach();
 				}
 				SystemConf::getInstance()->saveSystemConf();
 			});
@@ -2330,7 +2335,8 @@ void GuiMenu::openSystemSettings()
 			{
 				if (optionsAudioProfile->changed()) {
 					SystemConf::getInstance()->set("audio.profile", optionsAudioProfile->getSelected());
-					ApiSystem::getInstance()->setAudioOutputProfile(optionsAudioProfile->getSelected());
+					std::string audioProfile = optionsAudioProfile->getSelected();
+					std::thread([audioProfile] { ApiSystem::getInstance()->setAudioOutputProfile(audioProfile); }).detach();
 				}
 				SystemConf::getInstance()->saveSystemConf();
 			});
@@ -2524,7 +2530,9 @@ void GuiMenu::openSystemSettings()
 		{
 			if (overclock_choice->changed() && Settings::getInstance()->setString("Overclock", overclock_choice->getSelected()))
 			{
-				ApiSystem::getInstance()->setOverclock(overclock_choice->getSelected());
+				// shell script write; keep the save path responsive
+				std::string overclock = overclock_choice->getSelected();
+				std::thread([overclock] { ApiSystem::getInstance()->setOverclock(overclock); }).detach();
 				s->setVariable("reboot", true);
 			}
 		});
@@ -2664,7 +2672,8 @@ void GuiMenu::openSystemSettings()
 		{
 			if (optionsStorage->changed())
 			{
-				ApiSystem::getInstance()->setStorage(optionsStorage->getSelected());
+				std::string storage = optionsStorage->getSelected();
+				std::thread([storage] { ApiSystem::getInstance()->setStorage(storage); }).detach();
 				s->setVariable("reboot", true);
 			}
 		});
@@ -5179,8 +5188,19 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectAdhocEnable)
 	auto ip = std::make_shared<TextComponent>(mWindow, ApiSystem::getInstance()->getIpAddress(), font, color);
 	s->addWithLabel(_("IP ADDRESS"), ip);
 
-	auto status = std::make_shared<TextComponent>(mWindow, ApiSystem::getInstance()->ping() ? _("CONNECTED") : _("NOT CONNECTED"), font, color);
+	// ping() chains up to three 2-second shell pings; keep it off the UI
+	// thread (opening this menu used to freeze for up to 6 seconds) and
+	// fill the label in when the result lands.
+	auto status = std::make_shared<TextComponent>(mWindow, _("CHECKING..."), font, color);
 	s->addWithLabel(_("INTERNET STATUS"), status);
+	{
+		Window* window = mWindow;
+		std::thread([window, status]
+		{
+			bool connected = ApiSystem::getInstance()->ping();
+			window->postToUiThread([status, connected] { status->setText(connected ? _("CONNECTED") : _("NOT CONNECTED")); });
+		}).detach();
+	}
 
 	// Network Indicator
 	auto networkIndicator = std::make_shared<SwitchComponent>(mWindow);
@@ -5350,7 +5370,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectAdhocEnable)
 #endif
 		}
 		else if (baseWifiEnabled)
-			ApiSystem::getInstance()->disableWifi();
+			std::thread([] { ApiSystem::getInstance()->disableWifi(); }).detach();
 	});
 
 	enable_wifi->setOnChangedCallback([this, s, baseWifiEnabled, enable_wifi, baseAdhocEnabled, enable_adhoc]()
@@ -5397,7 +5417,7 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectAdhocEnable)
 			}
 			else
 			{
-				ApiSystem::getInstance()->disableWifi();
+				std::thread([] { ApiSystem::getInstance()->disableWifi(); }).detach();
 				delete s;
 				openNetworkSettings(true);
 			}
@@ -5421,16 +5441,44 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectAdhocEnable)
 
 		if (wifienabled)
 		{
-			ApiSystem::getInstance()->disableWifi();
+			// Same busy-spinner treatment as the WiFi toggle: this path
+			// tears the association down and reconnects, which can take
+			// tens of seconds on slow dongles (it used to freeze the UI).
+			Window* window = mWindow;
+			std::string ssid = SystemConf::getInstance()->get("wifi.ssid");
+			std::string key = SystemConf::getInstance()->get("wifi.key");
 #if !WIN32
-			ApiSystem::getInstance()->enableWifi(SystemConf::getInstance()->get("wifi.ssid"), SystemConf::getInstance()->get("wifi.key"), SystemConf::getInstance()->get("wifi.country"));
+			std::string country = SystemConf::getInstance()->get("wifi.country");
+			window->pushGui(new GuiLoading<bool>(window, _("CONNECTING TO WI-FI"),
+				[ssid, key, country](auto gui)
+				{
+					ApiSystem::getInstance()->disableWifi();
+					return ApiSystem::getInstance()->enableWifi(ssid, key, country);
+				},
+				[this, s](bool)
+				{
+					delete s;
+					openNetworkSettings(false, true);
+				}));
 #else
-			ApiSystem::getInstance()->enableWifi(SystemConf::getInstance()->get("wifi.ssid"), SystemConf::getInstance()->get("wifi.key"));
+			window->pushGui(new GuiLoading<bool>(window, _("CONNECTING TO WI-FI"),
+				[ssid, key](auto gui)
+				{
+					ApiSystem::getInstance()->disableWifi();
+					return ApiSystem::getInstance()->enableWifi(ssid, key);
+				},
+				[this, s](bool)
+				{
+					delete s;
+					openNetworkSettings(false, true);
+				}));
 #endif
 		}
-
-		delete s;
-		openNetworkSettings(false, true);
+		else
+		{
+			delete s;
+			openNetworkSettings(false, true);
+		}
 	});
 
 	// NETWORK SERVICES

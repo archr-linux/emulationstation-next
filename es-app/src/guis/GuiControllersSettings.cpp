@@ -11,6 +11,7 @@
 
 #include "guis/GuiMsgBox.h"
 #include "GuiLoading.h"
+#include <thread>
 #include "InputManager.h"
 #include "SystemConf.h"
 
@@ -142,14 +143,23 @@ GuiControllersSettings::GuiControllersSettings(Window* wnd, int autoSel) : GuiSe
 			{
 				SystemConf::getInstance()->setBool("controllers.bluetooth.enabled", btEnabled);
 				SystemConf::getInstance()->saveSystemConf();
-				if (btEnabled)
-					ApiSystem::getInstance()->enableBluetooth();
-				else
-					ApiSystem::getInstance()->disableBluetooth();
-
+				// bluetoothctl can take seconds; show the busy spinner and
+				// rebuild the menu when it finishes instead of freezing.
 				Window* parent = window;
-				delete this;
-				openControllersSettings(parent, 2);
+				parent->pushGui(new GuiLoading<bool>(parent, btEnabled ? _("ENABLE BLUETOOTH") : _("DISABLE BLUETOOTH"),
+					[btEnabled](auto gui)
+					{
+						if (btEnabled)
+							ApiSystem::getInstance()->enableBluetooth();
+						else
+							ApiSystem::getInstance()->disableBluetooth();
+						return true;
+					},
+					[this, parent](bool)
+					{
+						delete this;
+						openControllersSettings(parent, 2);
+					}));
 			}
 		});
 
@@ -160,10 +170,13 @@ GuiControllersSettings::GuiControllersSettings(Window* wnd, int autoSel) : GuiSe
 			{
 				SystemConf::getInstance()->setBool("controllers.bluetooth.enabled", btEnabled);
 				SystemConf::getInstance()->saveSystemConf();
-				if (btEnabled)
-					ApiSystem::getInstance()->enableBluetooth();
-				else
-					ApiSystem::getInstance()->disableBluetooth();
+				std::thread([btEnabled]
+				{
+					if (btEnabled)
+						ApiSystem::getInstance()->enableBluetooth();
+					else
+						ApiSystem::getInstance()->disableBluetooth();
+				}).detach();
 			}
 		});
 
