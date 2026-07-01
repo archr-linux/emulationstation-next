@@ -5308,23 +5308,44 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectAdhocEnable)
 		{
 			std::string newSSID = SystemConf::getInstance()->get("wifi.ssid");
 			std::string newKey = SystemConf::getInstance()->get("wifi.key");
+
+			// enableWifi scans and associates, which can take 30+ seconds on
+			// slow USB dongles. Run it behind a loading spinner instead of
+			// blocking the UI thread: the console looked frozen while it was
+			// silently trying to connect.
 #if !WIN32
 			std::string newCountry = SystemConf::getInstance()->get("wifi.country");
 
 			if (baseSSID != newSSID || baseKEY != newKey || baseCountry != newCountry || !baseWifiEnabled)
 			{
-				if (ApiSystem::getInstance()->enableWifi(newSSID, newKey, newCountry))
-					window->pushGui(new GuiMsgBox(window, _("WIFI ENABLED")));
-				else
-					window->pushGui(new GuiMsgBox(window, _("WIFI CONFIGURATION ERROR")));
+				window->pushGui(new GuiLoading<bool>(window, _("CONNECTING TO WI-FI"),
+					[newSSID, newKey, newCountry](auto gui)
+					{
+						return ApiSystem::getInstance()->enableWifi(newSSID, newKey, newCountry);
+					},
+					[window](bool ok)
+					{
+						if (ok)
+							window->pushGui(new GuiMsgBox(window, _("WIFI ENABLED")));
+						else
+							window->pushGui(new GuiMsgBox(window, _("WIFI CONFIGURATION ERROR")));
+					}));
 			}
 #else
 			if (baseSSID != newSSID || baseKEY != newKey || !baseWifiEnabled)
 			{
-				if (ApiSystem::getInstance()->enableWifi(newSSID, newKey))
-					window->pushGui(new GuiMsgBox(window, _("WIFI ENABLED")));
-				else
-					window->pushGui(new GuiMsgBox(window, _("WIFI CONFIGURATION ERROR")));
+				window->pushGui(new GuiLoading<bool>(window, _("CONNECTING TO WI-FI"),
+					[newSSID, newKey](auto gui)
+					{
+						return ApiSystem::getInstance()->enableWifi(newSSID, newKey);
+					},
+					[window](bool ok)
+					{
+						if (ok)
+							window->pushGui(new GuiMsgBox(window, _("WIFI ENABLED")));
+						else
+							window->pushGui(new GuiMsgBox(window, _("WIFI CONFIGURATION ERROR")));
+					}));
 			}
 #endif
 		}
@@ -5342,18 +5363,44 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectAdhocEnable)
 
 			if (wifienabled)
 			{
+				// Same spinner treatment as the save path: the connect can
+				// take tens of seconds and used to freeze the menu. GuiLoading
+				// deletes itself before invoking the completion callback, so
+				// closing the settings window there is safe.
+				Window* window = mWindow;
+				std::string ssid = SystemConf::getInstance()->get("wifi.ssid");
+				std::string key = SystemConf::getInstance()->get("wifi.key");
 #if !WIN32
 				std::string country = SystemConf::getInstance()->get("wifi.country");
-				ApiSystem::getInstance()->enableWifi(SystemConf::getInstance()->get("wifi.ssid"), SystemConf::getInstance()->get("wifi.key"), country);
+				window->pushGui(new GuiLoading<bool>(window, _("CONNECTING TO WI-FI"),
+					[ssid, key, country](auto gui)
+					{
+						return ApiSystem::getInstance()->enableWifi(ssid, key, country);
+					},
+					[this, s](bool)
+					{
+						delete s;
+						openNetworkSettings(true);
+					}));
 #else
-				ApiSystem::getInstance()->enableWifi(SystemConf::getInstance()->get("wifi.ssid"), SystemConf::getInstance()->get("wifi.key"));
+				window->pushGui(new GuiLoading<bool>(window, _("CONNECTING TO WI-FI"),
+					[ssid, key](auto gui)
+					{
+						return ApiSystem::getInstance()->enableWifi(ssid, key);
+					},
+					[this, s](bool)
+					{
+						delete s;
+						openNetworkSettings(true);
+					}));
 #endif
 			}
 			else
+			{
 				ApiSystem::getInstance()->disableWifi();
-
-			delete s;
-			openNetworkSettings(true);
+				delete s;
+				openNetworkSettings(true);
+			}
 		}
 	});
 
