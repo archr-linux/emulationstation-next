@@ -175,6 +175,13 @@ public:
 
 	void importScrappedMetadata(const MetaDataList& source);
 
+	// Binary gamelist cache round-trip (see Gamelist.cpp). Serializes the
+	// fully-processed state (post loadFromXML/migrate/genre conversion),
+	// including unknown XML elements and scrape dates, so a cache replay
+	// is byte-equivalent to re-parsing the same gamelist.xml.
+	void serializeToCache(std::string& out) const;
+	bool deserializeFromCache(const char*& p, const char* end, SystemData* relativeTo);
+
 	std::string getRelativeRootPath();
 
 	void setScrapeDate(const std::string& scraper);

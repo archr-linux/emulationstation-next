@@ -1,4 +1,6 @@
 #include "MetaData.h"
+#include <cstring>
+#include <algorithm>
 
 #include "utils/FileSystemUtil.h"
 #include "utils/StringUtil.h"
@@ -607,4 +609,144 @@ Utils::Time::DateTime* MetaDataList::getScrapeDate(const std::string& scraper)
 	}
 
 	return nullptr;
+}
+
+
+// ---------------------------------------------------------------------------
+// Binary gamelist cache serialization (little-endian, same-machine format;
+// Gamelist.cpp bumps GAMELIST_CACHE_VERSION whenever this layout changes).
+// ---------------------------------------------------------------------------
+static void cachePutU8(std::string& out, uint8_t v)
+{
+	out.push_back((char)v);
+}
+
+static void cachePutU32(std::string& out, uint32_t v)
+{
+	out.append((const char*)&v, sizeof(v));
+}
+
+static void cachePutStr(std::string& out, const std::string& s)
+{
+	cachePutU32(out, (uint32_t)s.size());
+	out.append(s);
+}
+
+static bool cacheGetU8(const char*& p, const char* end, uint8_t& v)
+{
+	if (p + 1 > end) return false;
+	v = (uint8_t)*p++;
+	return true;
+}
+
+static bool cacheGetU32(const char*& p, const char* end, uint32_t& v)
+{
+	if (p + sizeof(v) > end) return false;
+	memcpy(&v, p, sizeof(v));
+	p += sizeof(v);
+	return true;
+}
+
+static bool cacheGetStr(const char*& p, const char* end, std::string& s)
+{
+	uint32_t len;
+	if (!cacheGetU32(p, end, len) || p + len > end) return false;
+	s.assign(p, len);
+	p += len;
+	return true;
+}
+
+void MetaDataList::serializeToCache(std::string& out) const
+{
+	static_assert(MetaDataIdCount <= 255, "cache format stores MetaDataId as u8");
+
+	cachePutStr(out, mName);
+
+	uint8_t count = 0;
+	for (int id = 0; id < MetaDataIdCount; id++)
+		if (mIndices[id] >= 0)
+			count++;
+
+	cachePutU8(out, count);
+	for (int id = 0; id < MetaDataIdCount; id++)
+	{
+		if (mIndices[id] < 0)
+			continue;
+		cachePutU8(out, (uint8_t)id);
+		cachePutStr(out, mValues[mIndices[id]]);
+	}
+
+	cachePutU8(out, (uint8_t)std::min<size_t>(mUnKnownElements.size(), 255));
+	size_t emitted = 0;
+	for (auto& t : mUnKnownElements)
+	{
+		if (emitted++ == 255) break;
+		cachePutStr(out, std::get<0>(t));
+		cachePutStr(out, std::get<1>(t));
+		cachePutU8(out, std::get<2>(t) ? 1 : 0);
+	}
+
+	cachePutU8(out, (uint8_t)std::min<size_t>(mScrapeDates.size(), 255));
+	emitted = 0;
+	for (auto& kv : mScrapeDates)
+	{
+		if (emitted++ == 255) break;
+		cachePutU8(out, (uint8_t)kv.first);
+		cachePutStr(out, kv.second.getIsoString());
+	}
+}
+
+bool MetaDataList::deserializeFromCache(const char*& p, const char* end, SystemData* relativeTo)
+{
+	// Restore raw member state; values were serialized as stored (already
+	// trimmed/relativized by the original set() calls), so no reprocessing.
+	mRelativeTo = relativeTo;
+
+	if (!cacheGetStr(p, end, mName))
+		return false;
+
+	uint8_t count;
+	if (!cacheGetU8(p, end, count))
+		return false;
+
+	for (int i = 0; i < count; i++)
+	{
+		uint8_t id;
+		std::string value;
+		if (!cacheGetU8(p, end, id) || !cacheGetStr(p, end, value))
+			return false;
+		if (id >= MetaDataIdCount)
+			return false;
+		mIndices[id] = (int8_t)mValues.size();
+		mValues.push_back(value);
+	}
+
+	if (!cacheGetU8(p, end, count))
+		return false;
+
+	for (int i = 0; i < count; i++)
+	{
+		std::string a, b;
+		uint8_t flag;
+		if (!cacheGetStr(p, end, a) || !cacheGetStr(p, end, b) || !cacheGetU8(p, end, flag))
+			return false;
+		mUnKnownElements.push_back(std::make_tuple(a, b, flag != 0));
+	}
+
+	if (!cacheGetU8(p, end, count))
+		return false;
+
+	for (int i = 0; i < count; i++)
+	{
+		uint8_t scraper;
+		std::string iso;
+		if (!cacheGetU8(p, end, scraper) || !cacheGetStr(p, end, iso))
+			return false;
+		Utils::Time::DateTime dt(iso);
+		if (dt.isValid())
+			mScrapeDates[scraper] = dt;
+	}
+
+	mWasChanged = false;
+	return true;
 }

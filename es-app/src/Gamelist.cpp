@@ -10,6 +10,10 @@
 #include <pugixml/src/pugixml.hpp>
 #include "Genres.h"
 #include "Paths.h"
+#include <sys/stat.h>
+#include <fstream>
+#include <cstring>
+#include <cstdio>
 
 #ifdef WIN32
 #include <Windows.h>
@@ -222,6 +226,167 @@ std::vector<FileData*> loadGamelistFile(const std::string xmlpath, SystemData* s
 	return ret;
 }
 
+// ---------------------------------------------------------------------------
+// Binary gamelist cache. gamelist.xml is fully re-parsed with pugixml on
+// every boot; on large libraries that dominates startup. Cache the fully
+// processed entries (paths + final MetaDataList state) keyed on the XML's
+// mtime+size and replay them, skipping the XML parse, migrate() and genre
+// conversion entirely. Only used in the default !ParseGamelistOnly mode,
+// whose replay semantics (skip entries missing from the disk scan) the
+// cache reproduces exactly. Same-machine, little-endian format.
+// ---------------------------------------------------------------------------
+#define GAMELIST_CACHE_MAGIC   0x43475345u  // "ESGC"
+#define GAMELIST_CACHE_VERSION 1u
+
+std::string getGamelistCachePath(SystemData* system)
+{
+	return Utils::FileSystem::getGenericPath(Paths::getUserEmulationStationPath() + "/gamelist_cache/" + system->getName() + ".bin");
+}
+
+static uint64_t gamelistCacheMTime(const std::string& path)
+{
+	struct stat st;
+	if (stat(path.c_str(), &st) != 0)
+		return 0;
+	return (uint64_t)st.st_mtime;
+}
+
+static void cacheAppendU32(std::string& out, uint32_t v) { out.append((const char*)&v, sizeof(v)); }
+static void cacheAppendU64(std::string& out, uint64_t v) { out.append((const char*)&v, sizeof(v)); }
+
+static bool cacheReadU32(const char*& p, const char* end, uint32_t& v)
+{
+	if (p + sizeof(v) > end) return false;
+	memcpy(&v, p, sizeof(v)); p += sizeof(v);
+	return true;
+}
+
+static bool cacheReadU64(const char*& p, const char* end, uint64_t& v)
+{
+	if (p + sizeof(v) > end) return false;
+	memcpy(&v, p, sizeof(v)); p += sizeof(v);
+	return true;
+}
+
+static bool cacheReadStr(const char*& p, const char* end, std::string& out)
+{
+	uint32_t len;
+	if (!cacheReadU32(p, end, len) || p + len > end) return false;
+	out.assign(p, len); p += len;
+	return true;
+}
+
+static void writeGamelistCache(SystemData* system, const std::vector<FileData*>& entries, const std::string& xmlpath, size_t xmlSize)
+{
+	if (Settings::ParseGamelistOnly())
+		return;
+
+	std::string out;
+	cacheAppendU32(out, GAMELIST_CACHE_MAGIC);
+	cacheAppendU32(out, GAMELIST_CACHE_VERSION);
+	cacheAppendU64(out, gamelistCacheMTime(xmlpath));
+	cacheAppendU64(out, (uint64_t)xmlSize);
+	cacheAppendU32(out, (uint32_t)entries.size());
+
+	std::string relativeTo = system->getStartPath();
+	for (auto file : entries)
+	{
+		out.push_back((char)file->getType());
+		std::string rel = Utils::FileSystem::createRelativePath(file->getPath(), relativeTo, false);
+		cacheAppendU32(out, (uint32_t)rel.size());
+		out.append(rel);
+		file->getMetadata().serializeToCache(out);
+	}
+
+	std::string path = getGamelistCachePath(system);
+	Utils::FileSystem::createDirectory(Utils::FileSystem::getParent(path));
+
+	std::string tmp = path + ".tmp";
+	std::ofstream os(tmp, std::ios::binary | std::ios::trunc);
+	if (!os.is_open())
+		return;
+	os.write(out.data(), out.size());
+	os.close();
+	if (os.good())
+	{
+		Utils::FileSystem::removeFile(path);
+		std::rename(tmp.c_str(), path.c_str());
+	}
+	else
+		Utils::FileSystem::removeFile(tmp);
+}
+
+static bool loadGamelistCache(SystemData* system, std::unordered_map<std::string, FileData*>& fileMap, const std::string& xmlpath, size_t xmlSize)
+{
+	if (Settings::ParseGamelistOnly())
+		return false;
+
+	std::string path = getGamelistCachePath(system);
+	std::vector<char> buffer = Utils::FileSystem::readAllBytes(path);
+	if (buffer.empty())
+		return false;
+
+	const char* p = buffer.data();
+	const char* end = p + buffer.size();
+
+	uint32_t magic, version, count;
+	uint64_t mtime, size;
+	if (!cacheReadU32(p, end, magic) || magic != GAMELIST_CACHE_MAGIC ||
+		!cacheReadU32(p, end, version) || version != GAMELIST_CACHE_VERSION ||
+		!cacheReadU64(p, end, mtime) || !cacheReadU64(p, end, size) ||
+		!cacheReadU32(p, end, count))
+		return false;
+
+	if (mtime == 0 || mtime != gamelistCacheMTime(xmlpath) || size != (uint64_t)xmlSize)
+		return false;
+
+	std::string relativeTo = system->getStartPath();
+
+	for (uint32_t i = 0; i < count; i++)
+	{
+		uint8_t type;
+		if (p + 1 > end) return false;
+		type = (uint8_t)*p++;
+
+		std::string rel;
+		if (!cacheReadStr(p, end, rel))
+			return false;
+
+		const std::string filePath = Utils::FileSystem::resolveRelativePath(rel, relativeTo, false);
+
+		// Same lookup as loadGamelistFile in !trustGamelist mode: only
+		// entries the disk scan found get metadata; a scratch list still
+		// consumes the record so the stream stays aligned.
+		FileData* file = nullptr;
+		auto pGame = fileMap.find(filePath);
+		if (pGame != fileMap.end())
+			file = pGame->second;
+
+		if (file != nullptr)
+		{
+			MetaDataList& mdl = file->getMetadata();
+			if (!mdl.deserializeFromCache(p, end, system))
+				return false;
+			if (mdl.getName().empty())
+				mdl.set(MetaDataId::Name, file->getDisplayName());
+		}
+		else
+		{
+			MetaDataList scratch(type == (uint8_t)FOLDER ? FOLDER_METADATA : GAME_METADATA);
+			if (!scratch.deserializeFromCache(p, end, system))
+				return false;
+		}
+	}
+
+	LOG(LogInfo) << "Loaded gamelist cache for \"" << system->getName() << "\" (" << count << " entries)";
+	return true;
+}
+
+void invalidateGamelistCache(SystemData* system)
+{
+	Utils::FileSystem::removeFile(getGamelistCachePath(system));
+}
+
 void clearTemporaryGamelistRecovery(SystemData* system)
 {	
 	auto path = getGamelistRecoveryPath(system);
@@ -233,15 +398,32 @@ void parseGamelist(SystemData* system, std::unordered_map<std::string, FileData*
 	std::string xmlpath = system->getGamelistPath(false);
 
 	auto size = Utils::FileSystem::getFileSize(xmlpath);
-	if (size != 0)
-		loadGamelistFile(xmlpath, system, fileMap, SIZE_MAX, true);
 
 	auto files = Utils::FileSystem::getDirContent(getGamelistRecoveryPath(system), true);
+
+	// Fast path: replay the binary cache instead of parsing the XML when
+	// nothing changed and there is no crash-recovery data to merge.
+	if (files.empty() && size != 0 && size != SIZE_MAX)
+	{
+		if (loadGamelistCache(system, fileMap, xmlpath, size))
+		{
+			system->setGamelistHash(size);
+			return;
+		}
+	}
+
+	std::vector<FileData*> loadedEntries;
+	if (size != 0)
+		loadedEntries = loadGamelistFile(xmlpath, system, fileMap, SIZE_MAX, true);
+
 	for (auto file : files)
 		loadGamelistFile(file, system, fileMap, size, true);
 
 	if (size != SIZE_MAX)
-		system->setGamelistHash(size);	
+		system->setGamelistHash(size);
+
+	if (files.empty() && size != 0 && size != SIZE_MAX)
+		writeGamelistCache(system, loadedEntries, xmlpath, size);
 }
 
 bool addFileDataNode(pugi::xml_node& parent, FileData* file, const char* tag, SystemData* system, bool fullPaths = false)
@@ -466,7 +648,12 @@ void updateGamelist(SystemData* system)
 		if (!doc.save_file(WINSTRINGW(xmlWritePath).c_str()))
 			LOG(LogError) << "Error saving gamelist.xml to \"" << xmlWritePath << "\" (for system " << system->getName() << ")!";
 		else
+		{
+			// the cache mirrors the XML; drop it so the next boot rebuilds
+			// (mtime alone has 1s granularity, not enough on fast rewrites)
+			invalidateGamelistCache(system);
 			clearTemporaryGamelistRecovery(system);
+		}
 	}
 	else
 		clearTemporaryGamelistRecovery(system);
@@ -720,7 +907,12 @@ void cleanupGamelist(SystemData* system)
 		if (!doc.save_file(WINSTRINGW(xmlWritePath).c_str()))
 			LOG(LogError) << "Error saving gamelist.xml to \"" << xmlWritePath << "\" (for system " << system->getName() << ")!";
 		else
+		{
+			// the cache mirrors the XML; drop it so the next boot rebuilds
+			// (mtime alone has 1s granularity, not enough on fast rewrites)
+			invalidateGamelistCache(system);
 			clearTemporaryGamelistRecovery(system);
+		}
 	}
 	else
 		clearTemporaryGamelistRecovery(system);
