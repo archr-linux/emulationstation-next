@@ -246,7 +246,11 @@ void Settings::setDefaults()
 	mBoolMap["ScreenSaverControls"] = true;
 	mStringMap["ScreenSaverGameInfo"] = "never";
 	mBoolMap["StretchVideoOnScreenSaver"] = false;
-	mStringMap["PowerSaverMode"] = "default"; 
+	// "default" keeps a 40ms wakeup tick that renders ~25fps forever, which
+	// measured ~25% CPU sitting idle in the menu on the RK3326. "enhanced"
+	// blocks on events when idle and cut that to ~10% with no UX difference
+	// in testing (2026-07-01, Soysauce).
+	mStringMap["PowerSaverMode"] = "enhanced"; 
 
 	mBoolMap["StopMusicOnScreenSaver"] = false;
 
