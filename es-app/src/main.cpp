@@ -540,6 +540,17 @@ int main(int argc, char* argv[])
 	auto threadPool = new Utils::ThreadPool();
 	auto vlcInit = threadPool->queueWorkItem([] { VideoVlcComponent::init(); });
 	threadPool->queueWorkItem([] { ApiSystem::getInstance()->getIpAddress(); });
+	// Pre-warm the mutex-guarded shell enumerations behind the settings
+	// menus; on a cache miss they run popen synchronously on the UI thread,
+	// so the first open of the audio/display submenus used to stall. WiFi
+	// channels are intentionally NOT warmed here: the adapter may not be up
+	// yet and an empty result would be cached.
+	threadPool->queueWorkItem([]
+	{
+		ApiSystem::getInstance()->getAvailableAudioOutputDevices();
+		ApiSystem::getInstance()->getAvailableAudioOutputProfiles();
+		ApiSystem::getInstance()->getAvailableVideoOutputDevices();
+	});
 	threadPool->queueWorkItem([] { MetaDataList::initMetadata(); });
 	threadPool->queueWorkItem([] { MameNames::init(); });
 	threadPool->queueWorkItem([] { Genres::init(); });
