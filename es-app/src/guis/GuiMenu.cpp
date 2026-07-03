@@ -1812,6 +1812,13 @@ void GuiMenu::openSystemSettings()
 		pwr_led_disabled->setOnChangedCallback([pwr_led_disabled] {
 			bool pwrleddisabled = pwr_led_disabled->getState();
 				SystemConf::getInstance()->set("powerled.disabled", pwrleddisabled ? "1" : "0");
+			// The conf key alone had no consumer, so the switch silently did
+			// nothing. Apply it immediately: off kills the LED, re-enabling
+			// restores the POWER LED COLOR choice (heartbeat when unset).
+			std::string mode = pwrleddisabled ? "off" : SystemConf::getInstance()->get("option_powerled");
+			if (mode.empty())
+				mode = "heartbeat";
+			std::thread([mode] { ApiSystem::getInstance()->setPowerLedGameForce(mode); }).detach();
 		});
 	}
 
@@ -5192,6 +5199,15 @@ void GuiMenu::openNetworkSettings(bool selectWifiEnable, bool selectAdhocEnable)
 	// thread (opening this menu used to freeze for up to 6 seconds) and
 	// fill the label in when the result lands.
 	auto status = std::make_shared<TextComponent>(mWindow, _("CHECKING..."), font, color);
+	// The text is swapped in asynchronously and the row does not re-layout,
+	// so reserve the cell for the widest value it can receive (otherwise
+	// "NOT CONNECTED" overflows to the right and gets clipped) and keep the
+	// value glued to the right edge like the sibling rows.
+	float statusWidth = 0;
+	for (auto& candidate : { _("CHECKING..."), _("CONNECTED"), _("NOT CONNECTED") })
+		statusWidth = std::max(statusWidth, font->sizeText(candidate).x());
+	status->setSize(statusWidth, 0);
+	status->setHorizontalAlignment(Alignment::ALIGN_RIGHT);
 	s->addWithLabel(_("INTERNET STATUS"), status);
 	{
 		Window* window = mWindow;
