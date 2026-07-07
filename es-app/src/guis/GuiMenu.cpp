@@ -1817,7 +1817,7 @@ void GuiMenu::openSystemSettings()
 			// restores the POWER LED COLOR choice (heartbeat when unset).
 			std::string mode = pwrleddisabled ? "off" : SystemConf::getInstance()->get("option_powerled");
 			if (mode.empty())
-				mode = "heartbeat";
+				mode = "on";
 			std::thread([mode] { ApiSystem::getInstance()->setPowerLedGameForce(mode); }).detach();
 		});
 	}
@@ -2473,9 +2473,11 @@ void GuiMenu::openSystemSettings()
 	});
 
 	auto powerled_GameForce = std::make_shared< OptionListComponent<std::string> >(mWindow, _("POWER LED COLOR"));
-	powerled_GameForce->add(_("heartbeat"), "heartbeat", SystemConf::getInstance()->get("option_powerled") == "heartbeat" || SystemConf::getInstance()->get("option_powerled") == "");
+	powerled_GameForce->add(_("heartbeat"), "heartbeat", SystemConf::getInstance()->get("option_powerled") == "heartbeat");
 	powerled_GameForce->add(_("off"), "off", SystemConf::getInstance()->get("option_powerled") == "off");
-	powerled_GameForce->add(_("on"), "on", SystemConf::getInstance()->get("option_powerled") == "on");	
+	// The DTS boots the LED solid on, so an unset conf must show "on" or
+	// the menu claims heartbeat while the LED sits static.
+	powerled_GameForce->add(_("on"), "on", SystemConf::getInstance()->get("option_powerled") == "on" || SystemConf::getInstance()->get("option_powerled") == "");	
 	s->addWithLabel(_("POWER LED COLOR"), powerled_GameForce);
 	s->addSaveFunc([powerled_GameForce] 
 	{
